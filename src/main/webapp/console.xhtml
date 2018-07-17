@@ -1,0 +1,17 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core"
+	xmlns:p="http://primefaces.org/ui">
+<h:head>
+</h:head>
+<h:body>
+ 	<p:dataTable id="tabIntr" var="intr" value="#{console.interesses}" paginator="true" emptyMessage="Lista de interesses vazia"
+		paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+		rowsPerPageTemplate="10,15,25,50,100">
+		<f:facet name="header">Interesses</f:facet>
+		<p:column headerText="nome" style="width: 25%;" sortBy="#{intr.nome}">	
+			<h:outputText value="#{intr.nome}" />
+		</p:column>
+	</p:dataTable>
+</h:body>
+</html>

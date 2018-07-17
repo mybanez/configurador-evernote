@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="warn" monitorInterval="30" packages="meyn.cevn.modelo.log">
+  <Appenders>
+    <Console name="Console">
+      <PatternLayout pattern="%d{DATE} %-5level %logger{36} - %msg%n"/>
+    </Console>
+    <Evernote name="Evernote" updateInterval="10" ignoreExceptions="false">
+      <PatternLayout pattern="%d{DATE} %-5level %logger{36} - %msg%n"/>
+    </Evernote>
+  </Appenders>
+  <Loggers>
+ 	<Logger name="meyn.cevn.modelo.ContextoEvn" level="debug" additivity="false">
+      <AppenderRef ref="Evernote"/>
+    </Logger>
+ 	<Logger name="meyn.util.contexto" level="debug" additivity="false">
+      <AppenderRef ref="Evernote"/>
+    </Logger>
+ 	<Logger name="meyn" level="info" additivity="false">
+      <AppenderRef ref="Evernote"/>
+    </Logger>
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>
