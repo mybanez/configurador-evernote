@@ -4,24 +4,24 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public class Grupo<TipoOT extends OTEvn<?>> {
+public class Grupo<TipoEnt extends EntidadeEvn<?>> {
 	private static final String EXP_NOME_GRUPO = "^<?([^<>]+)>?";
 
 	private String nome;
-	private TipoOT ot;
-	private SortedSet<Grupo<TipoOT>> stGrpsFilhos;
-	private SortedSet<TipoOT> stOtsFilho;
+	private TipoEnt ent;
+	private SortedSet<Grupo<TipoEnt>> stGrpsFilhos;
+	private SortedSet<TipoEnt> stEntsFilho;
 
 	public Grupo(String nome) {
 		this(nome, null);
 	}
 
-	public Grupo(String nome, TipoOT ot) {
+	public Grupo(String nome, TipoEnt ent) {
 		setNome(nome);
-		this.ot = ot;
-		stGrpsFilhos = new TreeSet<Grupo<TipoOT>>((a, b) -> a.getNome().compareTo(b.getNome()));
+		this.ent = ent;
+		stGrpsFilhos = new TreeSet<Grupo<TipoEnt>>((a, b) -> a.getNome().compareTo(b.getNome()));
 		//Viabiliza nomes iguais no conjunto
-		stOtsFilho = new TreeSet<TipoOT>((a, b) -> {
+		stEntsFilho = new TreeSet<TipoEnt>((a, b) -> {
 			int comp = a.getNome().compareTo(b.getNome());
 			return comp != 0 ? comp : 1; 
 		});
@@ -35,23 +35,23 @@ public class Grupo<TipoOT extends OTEvn<?>> {
 		this.nome = nome.replaceFirst(EXP_NOME_GRUPO, "$1");
 	}
 
-	public TipoOT getOT() {
-		return ot;
+	public TipoEnt getEntidade() {
+		return ent;
 	}
 
-	public void setOT(TipoOT ot) {
-		this.ot = ot;
+	public void setEntidade(TipoEnt ent) {
+		this.ent = ent;
 	}
 
-	public Set<Grupo<TipoOT>> getGruposFilho() {
+	public Set<Grupo<TipoEnt>> getGruposFilho() {
 		return stGrpsFilhos;
 	}
 
-	public SortedSet<TipoOT> getOtsFilho() {
-		return stOtsFilho;
+	public SortedSet<TipoEnt> getEntidadesFilho() {
+		return stEntsFilho;
 	}
 
 	public boolean isVazio() {
-		return stGrpsFilhos.isEmpty() && stOtsFilho.isEmpty();
+		return stGrpsFilhos.isEmpty() && stEntsFilho.isEmpty();
 	}
 }

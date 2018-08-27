@@ -11,11 +11,11 @@ import meyn.cevn.modelo.CadastroEtiqueta;
 import meyn.cevn.modelo.CadastroNota;
 import meyn.cevn.modelo.ChavesModelo;
 import meyn.cevn.modelo.Etiqueta;
+import meyn.cevn.modelo.Usuario;
 import meyn.cevn.modelo.interesse.CadastroInteresse;
 import meyn.cevn.modelo.interesse.Interesse;
 import meyn.cevn.modelo.projeto.CadastroProjeto;
 import meyn.cevn.modelo.projeto.Projeto;
-import meyn.cevn.modelo.usuario.Usuario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
@@ -27,13 +27,13 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 	private final CadastroEtiqueta<Etiqueta> cadForm = new CadastroEtiqueta<Etiqueta>("<Formato>") {};
 	private final CadastroEtiqueta<Etiqueta> cadTema = new CadastroEtiqueta<Etiqueta>("<Tema>") {};
 
-	public CadastroReferencia() throws ErroCadastro {
-		super(REPOSITORIO, GRUPO, true, false, true);	
+	public CadastroReferencia() throws ErroModelo {
+		super(REPOSITORIO, GRUPO, true, true, true);	
 	}
 
 	@Override
-	protected void iniciarPropriedadesOT(Usuario usu, NoteMetadata mtd, Referencia ref) throws ErroModelo {
-		super.iniciarPropriedadesOT(usu, mtd, ref);
+	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, Referencia ref) throws ErroModelo {
+		super.iniciarPropriedadesEnt(usu, mtd, ref);
 		List<String> lsIdsTag = new ArrayList<String>(mtd.getTagGuids());
 		Collection<Etiqueta> clFormatos = new ArrayList<Etiqueta>();
 		Collection<Etiqueta> clTemas = new ArrayList<Etiqueta>();
@@ -51,8 +51,8 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 	}
 
 	@Override
-	protected void iniciarPropriedadesRelacionamentoOT(Usuario usu, NoteMetadata mtd, Referencia ref)
-			throws ErroModelo {
+	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, NoteMetadata mtd, Referencia ref)
+			throws ErroCadastro {
 		List<String> lsIdsTag = new ArrayList<String>(mtd.getTagGuids());
 		for (Etiqueta etq : ref.getFormatos()) {
 			lsIdsTag.remove(etq.getId());
@@ -84,8 +84,8 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 	}
 
 	@Override
-	public void validarPropriedadesOT(Usuario usu, Referencia ref) {
-		super.validarPropriedadesOT(usu, ref);
+	public void validarPropriedadesEnt(Usuario usu, Referencia ref) {
+		super.validarPropriedadesEnt(usu, ref);
 		Collection<String> clMsgs = ref.getMensagensValidacao();
 		// Formato 
 		if (ref.getFormatos().isEmpty()) {

@@ -8,7 +8,7 @@ import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.type.Notebook;
 import com.evernote.thrift.TException;
 
-import meyn.cevn.modelo.usuario.Usuario;
+import meyn.cevn.ClienteEvn;
 import meyn.util.modelo.ErroModelo;
 
 @SuppressWarnings("serial")

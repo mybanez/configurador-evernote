@@ -1,15 +1,15 @@
 package meyn.cevn.modelo.log;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
-import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
@@ -20,16 +20,16 @@ import com.evernote.edam.error.EDAMSystemException;
 import com.evernote.edam.error.EDAMUserException;
 import com.evernote.thrift.TException;
 
+import meyn.cevn.ClienteEvn;
+import meyn.cevn.ContextoEvn;
 import meyn.cevn.modelo.CadastroNota;
 import meyn.cevn.modelo.ChavesModelo;
-import meyn.cevn.modelo.ClienteEvn;
-import meyn.cevn.modelo.ContextoEvn;
 import meyn.cevn.modelo.Nota;
-import meyn.cevn.modelo.usuario.Usuario;
+import meyn.cevn.modelo.Usuario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
-import meyn.util.modelo.ot.FabricaOT;
+import meyn.util.modelo.entidade.FabricaEntidade;
 
 public class CadastroLog extends CadastroNota<Nota> {
 
@@ -37,131 +37,120 @@ public class CadastroLog extends CadastroNota<Nota> {
 	@Plugin(name = "Evernote", category = "Core", elementType = "appender", printObject = true)
 	private static final class AppenderEvn extends AbstractAppender {
 
-		static final String TEXT_STYLE = "font-family: Courier New; font-size: 10pt;";
+		private static final Map<String, AppenderEvn.ProcessoAtualizacao> MP_THREADS = new ConcurrentHashMap<String, AppenderEvn.ProcessoAtualizacao>();
 
-		class UpdateThread extends Thread {
+		@PluginFactory
+		public static AppenderEvn criarAppender(@PluginAttribute("name") String nome,
+				@PluginAttribute("updateInterval") int intervaloAtualizacao,
+				@PluginElement("Filters") final Filter filtro,
+				@PluginElement("Layout") Layout<? extends Serializable> leiaute,
+				@PluginAttribute("ignoreExceptions") boolean ignorarErros) {
+			try {
+				if (nome == null) {
+					LOGGER.error("Nome não fornecido para AppenderEvn");
+					return null;
+				}
+				if (leiaute == null) {
+					leiaute = PatternLayout.createDefaultLayout();
+				}
+				for (ProcessoAtualizacao thr : MP_THREADS.values()) {
+					thr.desativar();
+				}
+				return new AppenderEvn(nome, intervaloAtualizacao, filtro, leiaute, ignorarErros);
+			} catch (ErroModelo e) {
+				LOGGER.error("Erro criando AppenderEvn: ", e);
+				return null;
+			}
+		}
+
+		class ProcessoAtualizacao extends Thread {
 
 			Usuario usu;
-			boolean active = true;
-			boolean logUpdated = false;
-			boolean logCreation = false;
-			final StringBuffer logContent = new StringBuffer();
+			boolean logAtivo = true;
+			boolean logAtualizado = false;
+			final StringBuffer conteudoLog = new StringBuffer();
 
-			UpdateThread(Usuario usu) {
+			ProcessoAtualizacao(Usuario usu) {
 				this.usu = usu;
-				cadLog.gerarCabecalho(logContent);
+				cadLog.gerarCabecalho(conteudoLog);
+				MP_THREADS.put(usu.getId(), this);
 				start();
 			}
 
 			void append(byte[] bytes) {
-				//Garante que uma linha seja gerada de forma atômica
-				synchronized (logContent) {
-					cadLog.gerarInicioLinha(logContent);
-					cadLog.gerarTexto(logContent, new String(bytes), TEXT_STYLE);
-					cadLog.gerarFimLinha(logContent);
-					logUpdated = true;
+				// Garante que uma linha seja gerada de forma atômica
+				synchronized (conteudoLog) {
+					cadLog.gerarInicioLinha(conteudoLog);
+					cadLog.gerarTexto(conteudoLog, new String(bytes), TEXT_STYLE);
+					cadLog.gerarFimLinha(conteudoLog);
+					logAtualizado = true;
 				}
 			}
 
 			@Override
 			public void run() {
-				String userName;
+				ThreadContext.put("usuario", usu.getId());
 				try {
-					userName = ClienteEvn.getUserStore(usu).getUser().getUsername();
-					String logName = "Log - " + userName + "@" + usu.getId();
-					while (active) {
-						if (logUpdated) {
-							Nota log;
-							try {
+					Nota log = usu.getLog();
+					// Não faz nada se o log não tiver sido criado
+					if (log != null) {
+						cadLog.getLogger().debug("Thread do appender iniciado: {}", log.getNome());
+						while (logAtivo) {
+							if (logAtualizado) {
 								try {
-									log = cadLog.consultarPorNome(usu, logName);
-									log.setConteudo(cadLog.contentToString(logContent));
+									log.setConteudo(cadLog.contentToString(conteudoLog));
 									cadLog.alterar(usu, log);
-								} catch (ErroItemNaoEncontrado e) {
-									log = FabricaOT.getInstancia(Nota.class);
-									log.setNome(logName);
-									log.setLembrete(false);
-									log.setConteudo(cadLog.contentToString(logContent));
-									logCreation = true;
-									try {
-										cadLog.incluir(usu, log);
-									} finally {
-										logCreation = false;
-									}
+									logAtualizado = false;
+								} catch (ErroModelo e) {
+									cadLog.getLogger().error("Erro escrevendo no log: ", e);
 								}
-								logUpdated = false;
-							} catch (ErroCadastro e) {
-								LogManager.getRootLogger().error("Erro atualizando log:", e);
+							}
+							try {
+								Thread.sleep(intervaloAtualizacao * 1000);
+							} catch (InterruptedException e) {
 							}
 						}
-						try {
-							Thread.sleep(updateInterval * 1000);
-						} catch (InterruptedException e) {
-						}
 					}
-				} catch (EDAMUserException | EDAMSystemException | TException e) {
-					LogManager.getRootLogger().error("Erro iniciando log:", e);
+					MP_THREADS.remove(usu.getId());
+				} catch (Exception e) {
+					cadLog.getLogger().error("Processo de atualização do log abortado. Usuario: {}", usu, e);
 				}
 			}
 
-			void shutdown() {
-				active = false;
+			void desativar() {
+				logAtivo = false;
 			}
 		}
 
 		private final CadastroLog cadLog;
-		private final int updateInterval;
-		private static final Map<String, AppenderEvn.UpdateThread> MP_THREADS = new ConcurrentHashMap<String, AppenderEvn.UpdateThread>();
+		private final int intervaloAtualizacao;
 
-		public AppenderEvn(String name, int updateInterval, int maxSize, Filter filter,
-				Layout<? extends Serializable> layout, boolean ignoreExceptions) throws ErroCadastro {
-			super(name, filter, layout, ignoreExceptions);
+		public AppenderEvn(String nome, int intervaloAtualizacao, Filter filtro, Layout<? extends Serializable> leiaute,
+				boolean ignorarErros) throws ErroModelo {
+			super(nome, filtro, leiaute, ignorarErros);
 			this.cadLog = getCadastro(ChavesModelo.LOG);
-			this.updateInterval = updateInterval;
+			this.intervaloAtualizacao = intervaloAtualizacao;
 		}
 
 		@Override
 		public void append(LogEvent event) {
 			try {
 				String idUsu = event.getContextData().getValue("usuario");
-				UpdateThread thr;
+				ProcessoAtualizacao thr;
+				LOGGER.trace("Mensagem gerada. Logger: {} Nivel: {} ", event.getLoggerName(), event.getLevel());
 				if (idUsu != null) {
-					thr = MP_THREADS.get(idUsu);
-					if (thr == null) {
-						Usuario usu = ContextoEvn.getContexto(idUsu).getUsuario();
-						thr = new UpdateThread(usu);
-						MP_THREADS.put(idUsu, thr);
+					synchronized (MP_THREADS) {
+						thr = MP_THREADS.get(idUsu);
+						if (thr == null) {
+							// Pode gerar erro se houver chamada antes da criação do contexto Evn
+							thr = new ProcessoAtualizacao(ContextoEvn.getContexto(idUsu).getUsuario());
+						}
 					}
+					LOGGER.trace("Mensagem apensada. Logger: {} Nivel: {} ", event.getLoggerName(), event.getLevel());
 					thr.append(getLayout().toByteArray(event));
 				}
-			} catch (Exception ex) {
-				if (!ignoreExceptions()) {
-					throw new AppenderLoggingException(ex);
-				}
-			}
-		}
-
-		@PluginFactory
-		public static AppenderEvn createAppender(@PluginAttribute("name") String name,
-				@PluginAttribute("updateInterval") int updateInterval, @PluginAttribute("maximumSize") int maxSize,
-				@PluginElement("Filters") final Filter filter,
-				@PluginElement("Layout") Layout<? extends Serializable> layout,
-				@PluginAttribute("ignoreExceptions") boolean ignoreExceptions) {
-			if (name == null) {
-				LOGGER.error("Nome não fornecido para AppenderEvn");
-				return null;
-			}
-			if (layout == null) {
-				layout = PatternLayout.createDefaultLayout();
-			}
-			try {
-				for (UpdateThread thr : MP_THREADS.values()) {
-					thr.shutdown();
-				}
-				return new AppenderEvn(name, updateInterval, maxSize, filter, layout, ignoreExceptions);
-			} catch (ErroCadastro e) {
-				LOGGER.error("Erro criando AppenderEvn: {}", e.getMessage());
-				return null;
+			} catch (Exception e) {
+				LOGGER.error("Erro escrevendo no log: ", e);
 			}
 		}
 	}
@@ -170,25 +159,62 @@ public class CadastroLog extends CadastroNota<Nota> {
 
 	public static void desativarServico(Usuario usu) {
 		if (AppenderEvn.MP_THREADS.containsKey(usu.getId())) {
-			AppenderEvn.MP_THREADS.get(usu.getId()).shutdown();
+			AppenderEvn.MP_THREADS.get(usu.getId()).desativar();
 		}
 	}
 
-	public CadastroLog() throws ErroCadastro {
-		super(REPOSITORIO);
-		setCacheInvalidoAposAtualizacao(true);
+	public CadastroLog() throws ErroModelo {
+		super(REPOSITORIO, false, false);
 	}
 
-	@Override
-	protected void invalidarCaches(Usuario usu) throws ErroModelo {
-		if (((AppenderEvn.UpdateThread) Thread.currentThread()).logCreation) {
-			super.invalidarCaches(usu);
+	// Recria o log se ele for excluído durante sessão ativa
+	public Nota gerarLogUsuario(Usuario usu) throws ErroCadastro {
+		Nota log = usu.getLog();
+		try {
+			String logName;
+			if (log == null) {
+				String userName = ClienteEvn.getUserStore(usu).getUser().getUsername();
+				logName = "Log - " + userName + "@" + usu.getId();
+			} else {
+				logName = log.getNome();
+			}
+			try {
+				log = consultarPorNome(usu, logName);
+			} catch (ErroItemNaoEncontrado e) {
+				log = FabricaEntidade.getInstancia(Nota.class);
+				log.setNome(logName);
+				log.setLembrete(false);
+				gerarMensagemInativo(log);
+				incluir(usu, log);
+				usu.setLog(log);
+			}
+		} catch (EDAMUserException | EDAMSystemException | TException e) {
+			throw new ErroCadastro("Erro gerando log do usuário", e);
+		}
+		return log;
+	}
+
+	public void excluirLogsAntigos(Usuario usu) throws ErroCadastro {
+		Collection<Nota> clLogs = consultarPorFiltro(usu,
+				(log) -> log.getNome().startsWith("Log") && !log.getNome().contains(usu.getId()));
+		for (Nota log : clLogs) {
+			excluir(usu, log);
 		}
 	}
-
+	
 	//// GERAÇÃO DE ENML ////
 
-	public String contentToString(StringBuffer cont) {
+	static final String TEXT_STYLE = "font-family: Courier New; font-size: 10pt;";
+
+	private void gerarMensagemInativo(Nota log) {
+		StringBuffer cont = new StringBuffer();
+		gerarCabecalho(cont);
+		gerarTexto(cont, "Nenhuma informação registrada. Verificar configuração LOG4J!", TEXT_STYLE);
+		gerarRodape(cont);
+		log.setConteudo(cont.toString());
+	}
+
+	private String contentToString(StringBuffer cont) {
 		return cont.toString() + "</en-note>";
 	}
 }

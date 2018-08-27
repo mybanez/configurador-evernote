@@ -12,9 +12,13 @@ import meyn.util.ErroExecucao;
 import meyn.util.modelo.ErroModelo;
 
 @SuppressWarnings("serial")
-public abstract class CacheNotas<TipoNota extends Nota> extends CacheOTEvn<TipoNota> {
+abstract class CacheNotas<TipoNota extends Nota> extends CacheEntidadesEvn<TipoNota> {
 	
 	private class CachePorGrupo extends Cache<String, Grupo<TipoNota>> {
+		CachePorGrupo() { 
+			setLogger(CacheNotas.this.getLogger());
+		}
+		
 		void put(TipoNota nota) {
 			try {
 				Grupo<TipoNota> grupo, subgrupo;
@@ -27,6 +31,7 @@ public abstract class CacheNotas<TipoNota extends Nota> extends CacheOTEvn<TipoN
 						do {
 							String idGrupo = mtd.getGuid();
 							String nomeGrupo = mtd.getName();
+							String idGrupoPai = mtd.getParentGuid();
 							if (grupoHomonimoDeItemPermitido || !nomeGrupo.equals(nota.getNome())) {
 								grupo = getOrDefault(idGrupo, new Grupo<TipoNota>(nomeGrupo));
 								if (grupo.isVazio()) {
@@ -38,13 +43,16 @@ public abstract class CacheNotas<TipoNota extends Nota> extends CacheOTEvn<TipoN
 								} else {
 									//Só inclui se item não está em subgrupo
 									if (Collections.disjoint(cacheTag.consultarPorRepositorio(grupo.getNome()), lsIds)) {
-										grupo.getOtsFilho().add(nota);
+										grupo.getEntidadesFilho().add(nota);
 									}	
 								}
 								subgrupo = grupo;
 							}
-							mtd = cacheTag.get(mtd.getParentGuid());
-						} while (mtd != null);
+							if (idGrupoPai == null) {
+								break;
+							}
+							mtd = cacheTag.get(idGrupoPai);
+						} while (true);
 					}
 				}
 			} catch (ErroModelo e) {
@@ -54,6 +62,10 @@ public abstract class CacheNotas<TipoNota extends Nota> extends CacheOTEvn<TipoN
 	}
 
 	private class CachePorRepositorio extends Cache<String, List<TipoNota>> {
+		CachePorRepositorio() { 
+			setLogger(CacheNotas.this.getLogger());
+		}
+
 		void put(TipoNota nota) {
 			try {
 				String idRepo = nota.getMetadado().getNotebookGuid();
@@ -74,11 +86,11 @@ public abstract class CacheNotas<TipoNota extends Nota> extends CacheOTEvn<TipoN
 	private CachePorGrupo cacheGrupo = new CachePorGrupo();
 	private CachePorRepositorio cacheRepo = new CachePorRepositorio();
 
-	public boolean isGrupoHomonimoDeItemPermitido() {
+	protected boolean isGrupoHomonimoDeItemPermitido() {
 		return grupoHomonimoDeItemPermitido;
 	}
 
-	public void setGrupoHomonimoDeItemPermitido(boolean grupoHomonimoDeItemPermitido) {
+	protected void setGrupoHomonimoDeItemPermitido(boolean grupoHomonimoDeItemPermitido) {
 		this.grupoHomonimoDeItemPermitido = grupoHomonimoDeItemPermitido;
 	}
 
@@ -86,6 +98,7 @@ public abstract class CacheNotas<TipoNota extends Nota> extends CacheOTEvn<TipoN
 	public TipoNota put(String id, TipoNota nota) {
 		cacheGrupo.put(nota);
 		cacheRepo.put(nota);
+		getLogger().trace("carregado (cache notas): {} (atualizado: {})", nota.getNome(), nota.getDataAlteracao());
 		return super.put(id, nota);
 	}
 
@@ -97,12 +110,12 @@ public abstract class CacheNotas<TipoNota extends Nota> extends CacheOTEvn<TipoN
 	}
 
 	@Override
-	public Grupo<TipoNota> consultarPorGrupo(String nomeGrupo) throws ErroModelo {
+	protected Grupo<TipoNota> consultarPorGrupo(String nomeGrupo) throws ErroModelo {
 		return cacheGrupo.getOrDefault(nomeGrupo, new Grupo<TipoNota>(nomeGrupo));	
 	}
 
 	@Override
-	public Collection<TipoNota> consultarPorRepositorio(String nomeRepositorio) throws ErroModelo {
+	protected Collection<TipoNota> consultarPorRepositorio(String nomeRepositorio) throws ErroModelo {
 		return new ArrayList<TipoNota>(cacheRepo.getOrDefault(nomeRepositorio, Collections.emptyList()));
 	}
 }

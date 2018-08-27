@@ -1,9 +1,7 @@
 package meyn.cevn.modelo;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -11,189 +9,129 @@ import org.apache.commons.text.StringEscapeUtils;
 
 import com.evernote.thrift.TBase;
 
-import meyn.cevn.modelo.usuario.Usuario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.CadastroImpl;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
-public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoOT extends OTEvn<TipoMtd>>
-		extends CadastroImpl<Usuario, TipoOT> {
+public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends EntidadeEvn<TipoMtd>>
+		extends CadastroImpl<Usuario, TipoEnt> {
 
-	private static void ativarValidacaoOT(Usuario usu) throws ErroModelo {
-		CacheNotasConsulta.getCache(usu).ativarValidacaoOT();
-		CacheEtiquetasConsulta.getCache(usu).ativarValidacaoOT();
-	}
-
-	private static void desativarValidacaoOT(Usuario usu) throws ErroModelo {
-		CacheNotasConsulta.getCache(usu).desativarValidacaoOT();
-		CacheEtiquetasConsulta.getCache(usu).desativarValidacaoOT();
+	static void validarEntidades(Usuario usu) throws ErroModelo {
+		CacheNotasConsultas.getCache(usu).validarEntidades();
+		CacheEtiquetasConsultas.getCache(usu).validarEntidades();
 	}
 
 	private String nomeRepositorio;
 	private String nomeGrupo;
-	private boolean cacheInvalidoAposAtualizacao;
 	private Set<String> chavesCache = new HashSet<String>();
+	private boolean entidadeValidavel;
 
-	protected CadastroEvn(String nomeRepositorio) throws ErroCadastro {
-		this(nomeRepositorio, "");
+	protected CadastroEvn(String nomeRepositorio, boolean entidadeValidavel) throws ErroCadastro {
+		this(nomeRepositorio, "", entidadeValidavel);
 	}
 
-	protected CadastroEvn(String nomeRepositorio, String nomeGrupoPadrao) throws ErroCadastro {
-		this(nomeRepositorio, nomeGrupoPadrao, false);
-	}
-
-	protected CadastroEvn(String nomeRepositorio, boolean cacheInvalidoAposAtualizacao) throws ErroCadastro {
-		this(nomeRepositorio, "", cacheInvalidoAposAtualizacao);
-	}
-
-	protected CadastroEvn(String nomeRepositorio, String nomeGrupoPadrao, boolean cacheInvalidoAposAtualizacao) throws ErroCadastro {
+	protected CadastroEvn(String nomeRepositorio, String nomeGrupo, boolean entidadeValidavel) throws ErroCadastro {
 		this.nomeRepositorio = nomeRepositorio;
-		this.nomeGrupo = nomeGrupoPadrao;
-		this.cacheInvalidoAposAtualizacao = cacheInvalidoAposAtualizacao;
+		this.nomeGrupo = nomeGrupo;
+		this.entidadeValidavel = entidadeValidavel;
 	}
 
 	protected final String getNomeRepositorio() {
 		return nomeRepositorio;
 	}
 
-	protected final void setNomeRepositorio(String nomeRepositorio) {
-		this.nomeRepositorio = nomeRepositorio;
-	}
-
-	public String getNomeGrupo() {
+	protected String getNomeGrupo() {
 		return nomeGrupo;
-	}
-
-	public void setNomeGrupo(String nomeGrupoPadrao) {
-		this.nomeGrupo = nomeGrupoPadrao;
-	}
-
-	public boolean isCacheInvalidoAposAtualizacao() {
-		return cacheInvalidoAposAtualizacao;
-	}
-
-	public void setCacheInvalidoAposAtualizacao(boolean cacheInvalidoAposAtualizacao) {
-		this.cacheInvalidoAposAtualizacao = cacheInvalidoAposAtualizacao;
 	}
 
 	protected Set<String> getChavesCache() {
 		return chavesCache;
 	}
 
-	protected void setChavesCache(Set<String> chavesCache) {
-		this.chavesCache = chavesCache;
+	public boolean isEntidadeValidavel() {
+		return entidadeValidavel;
 	}
 
 	protected void invalidarCaches(Usuario usu) throws ErroModelo {
-		if (isCacheInvalidoAposAtualizacao()) {
-			List<CacheResultadosConsulta> lsCaches = Arrays.asList(CacheNotasConsulta.getCache(usu),
-					CacheEtiquetasConsulta.getCache(usu));
-			chaves: for (String chave : chavesCache) {
-				for (CacheResultadosConsulta cacheResultados : lsCaches) {
-					if (cacheResultados.containsKey(chave)) {
-						cacheResultados.get(chave).setAtualizado(false);
-						continue chaves;
-					}
-				}
-			}
-		}
+		CacheNotasConsultas.getCache(usu).invalidarCaches(chavesCache);
+		CacheEtiquetasConsultas.getCache(usu).invalidarCaches(chavesCache);
 	}
 
-	protected abstract CacheOTEvn<TipoOT> getCache(Usuario usu, Class<?> moldeOT) throws ErroModelo;
+	abstract CacheEntidadesEvn<TipoEnt> getCache(Usuario usu) throws ErroModelo;
 
-	protected abstract void iniciarPropriedadesOT(Usuario usu, TipoMtd mtd, TipoOT ot) throws ErroModelo;
+	protected abstract void iniciarPropriedadesEnt(Usuario usu, TipoMtd mtd, TipoEnt ent) throws ErroModelo;
 
-	protected void iniciarPropriedadesRelacionamentoOT(Usuario usu, TipoMtd mtd, TipoOT ot) throws ErroModelo {
+	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, TipoMtd mtd, TipoEnt ent) throws ErroModelo {
 	}
 
-	protected void validarPropriedadesOT(Usuario usu, TipoOT ot) throws ErroModelo {
+	protected void validarPropriedadesEnt(Usuario usu, TipoEnt ent) throws ErroModelo {
 	}
 
 	@Override
-	public Collection<TipoOT> consultarTodos(Usuario usu, Class<?> moldeOT) throws ErroCadastro {
+	public Collection<TipoEnt> consultarTodos(Usuario usu) throws ErroCadastro {
 		try {
-			return getCache(usu, moldeOT).consultarTodos();
+			return getCache(usu).consultarTodos();
 		} catch (ErroItemNaoEncontrado e) {
 			throw e;
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro consultando itens.", e);
 		}
 	}
-	
-	public Grupo<TipoOT> consultarTodosPorGrupos(Usuario usu) throws ErroCadastro {
-		return consultarTodosPorGrupos(usu, getMoldeOTPadrao());
-	}	
-		
-	public Grupo<TipoOT> consultarTodosPorGrupos(Usuario usu, Class<?> moldeOT) throws ErroCadastro {
+
+	public Grupo<TipoEnt> consultarTodosPorGrupos(Usuario usu) throws ErroCadastro {
 		try {
-			return getCache(usu, moldeOT).consultarPorGrupo(nomeGrupo);
+			return getCache(usu).consultarPorGrupo(nomeGrupo);
 		} catch (ErroItemNaoEncontrado e) {
 			throw e;
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro consultando itens.", e);
 		}
 	}
-	
-	public Collection<TipoOT> consultarPorRepositorio(Usuario usu, String nomeRepositorio) throws ErroCadastro {
-		return consultarPorRepositorio(usu, nomeRepositorio, getMoldeOTPadrao());
-	}
 
-	public Collection<TipoOT> consultarPorRepositorio(Usuario usu, String nomeRepositorio, Predicate<TipoOT> filtro)
+	public Collection<TipoEnt> consultarPorRepositorio(Usuario usu, String nomeRepositorio, Predicate<TipoEnt> filtro)
 			throws ErroCadastro {
-		return consultarPorRepositorio(usu, nomeRepositorio, filtro, getMoldeOTPadrao());
+		Collection<TipoEnt> clEnts = consultarPorRepositorio(usu, nomeRepositorio);
+		clEnts.removeIf(filtro.negate());
+		return clEnts;
 	}
 
-	public Collection<TipoOT> consultarPorRepositorio(Usuario usu, String nomeRepositorio, Predicate<TipoOT> filtro,
-			Class<?> moldeOT) throws ErroCadastro {
-		Collection<TipoOT> clOTs = consultarPorRepositorio(usu, nomeRepositorio, moldeOT);
-		clOTs.removeIf(filtro.negate());
-		return clOTs;
-	}
-
-	public Collection<TipoOT> consultarPorRepositorio(Usuario usu, String nomeRepositorio, Class<?> moldeOT)
+	public Collection<TipoEnt> consultarPorRepositorio(Usuario usu, String nomeRepositorio)
 			throws ErroCadastro {
 		try {
-			return getCache(usu, moldeOT).consultarPorRepositorio(nomeRepositorio);
+			return getCache(usu).consultarPorRepositorio(nomeRepositorio);
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro consultando itens por repositório: " + nomeRepositorio, e);
 		}
 	}
 
-	public Collection<TipoOT> consultarPorFiltro(Usuario usu, Predicate<TipoOT> filtro) throws ErroCadastro {
-		return consultarPorFiltro(usu, filtro, getMoldeOTPadrao());
-	}
-
-	public Collection<TipoOT> consultarPorFiltro(Usuario usu, Predicate<TipoOT> filtro, Class<?> moldeOT)
-			throws ErroCadastro {
+	public Collection<TipoEnt> consultarPorFiltro(Usuario usu, Predicate<TipoEnt> filtro) throws ErroCadastro {
 		try {
-			return getCache(usu, moldeOT).consultarPorFiltro(filtro);
+			return getCache(usu).consultarPorFiltro(filtro);
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro consultando itens por filtro: " + filtro.getClass(), e);
 		}
 	}
 
-	public Collection<TipoOT> validarTodos(Usuario usu) throws ErroCadastro {
+	public Collection<TipoEnt> validarTodos(Usuario usu) throws ErroCadastro {
 		try {
-			ativarValidacaoOT(usu);
-			Collection<TipoOT> clOTs = consultarTodos(usu);
-			desativarValidacaoOT(usu);
-			return clOTs;
+			validarEntidades(usu);
+			Collection<TipoEnt> clEnts = consultarTodos(usu);
+			return clEnts;
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro validando itens: " + e, e);
 		}
 	}
-	
-	public TipoOT validarPorChavePrimaria(Usuario usu, TipoOT chave) throws ErroCadastro {
+
+	public TipoEnt validarPorChavePrimaria(Usuario usu, TipoEnt chave) throws ErroCadastro {
 		return consultarPorChavePrimaria(usu, chave.getId());
 	}
 
-	public TipoOT validarPorChavePrimaria(Usuario usu, String id) throws ErroCadastro {
+	public TipoEnt validarPorChavePrimaria(Usuario usu, String id) throws ErroCadastro {
 		try {
-			ativarValidacaoOT(usu);
-			TipoOT OT = consultarPorChavePrimaria(usu, id);
-			desativarValidacaoOT(usu);
-			return OT;
+			validarEntidades(usu);
+			TipoEnt ent = consultarPorChavePrimaria(usu, id);
+			return ent;
 		} catch (ErroItemNaoEncontrado e) {
 			throw e;
 		} catch (ErroModelo e) {
@@ -201,18 +139,13 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoOT extends OTEvn
 		}
 	}
 
-	@Override
-	public TipoOT consultarPorChavePrimaria(Usuario usu, TipoOT chave, Class<?> moldeOT) throws ErroCadastro {
-		return consultarPorChavePrimaria(usu, chave.getId(), moldeOT);
+	public TipoEnt consultarPorChavePrimaria(Usuario usu, TipoEnt chave) throws ErroCadastro {
+		return consultarPorChavePrimaria(usu, chave.getId());
 	}
 
-	public TipoOT consultarPorChavePrimaria(Usuario usu, String id) throws ErroCadastro {
-		return consultarPorChavePrimaria(usu, id, getMoldeOTPadrao());
-	}
-
-	public TipoOT consultarPorChavePrimaria(Usuario usu, String id, Class<?> moldeOT) throws ErroCadastro {
+	public TipoEnt consultarPorChavePrimaria(Usuario usu, String id) throws ErroCadastro {
 		try {
-			return getCache(usu, moldeOT).consultarPorChavePrimaria(id);
+			return getCache(usu).consultarPorChavePrimaria(id);
 		} catch (ErroItemNaoEncontrado e) {
 			throw e;
 		} catch (ErroModelo e) {
@@ -220,20 +153,16 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoOT extends OTEvn
 		}
 	}
 
-	public TipoOT consultarPorNome(Usuario usu, String nome) throws ErroCadastro {
-		return consultarPorNome(usu, nome, getMoldeOTPadrao());
-	}
-
-	public TipoOT consultarPorNome(Usuario usu, String nome, Class<?> moldeOT) throws ErroCadastro {
+	public TipoEnt consultarPorNome(Usuario usu, String nome) throws ErroCadastro {
 		try {
-			return getCache(usu, moldeOT).consultarPorNome(nome);
+			return getCache(usu).consultarPorNome(nome);
 		} catch (ErroItemNaoEncontrado e) {
 			throw e;
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro consultando item: " + nome, e);
 		}
 	}
-	
+
 	//// GERAÇÃO DE ENML ////
 
 	private static final String EXP_QUEBRA_LINHA = "(?m)^(.*)$";
@@ -252,7 +181,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoOT extends OTEvn
 	protected void gerarRodape(StringBuffer cont) {
 		cont.append("</en-note>");
 	}
-	
+
 	protected <TipoTitulo, TipoItem> void gerarListaItens(StringBuffer cont, TipoTitulo titulo,
 			GeradorENML<TipoTitulo> grTitulo, Collection<TipoItem> clItens, GeradorENML<TipoItem> grItem) {
 		if (!clItens.isEmpty()) {
@@ -295,11 +224,11 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoOT extends OTEvn
 	protected void gerarInicioLinha(StringBuffer cont, String estiloTexto) {
 		cont.append("<div style=\"").append(estiloTexto).append("\">");
 	}
-	
+
 	protected void gerarInicioLinha(StringBuffer cont) {
 		cont.append("<div>");
 	}
-	
+
 	protected void gerarFimLinha(StringBuffer cont) {
 		cont.append("</div>");
 	}
@@ -326,5 +255,5 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoOT extends OTEvn
 
 	protected void gerarQuebraLinha(StringBuffer cont) {
 		cont.append("<br/>");
-	}	
+	}
 }

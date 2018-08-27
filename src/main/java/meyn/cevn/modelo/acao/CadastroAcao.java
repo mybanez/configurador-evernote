@@ -3,7 +3,6 @@ package meyn.cevn.modelo.acao;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,13 +15,13 @@ import meyn.cevn.modelo.CadastroEtiqueta;
 import meyn.cevn.modelo.CadastroNota;
 import meyn.cevn.modelo.ChavesModelo;
 import meyn.cevn.modelo.Etiqueta;
+import meyn.cevn.modelo.Usuario;
 import meyn.cevn.modelo.interesse.CadastroInteresse;
 import meyn.cevn.modelo.interesse.Interesse;
 import meyn.cevn.modelo.projeto.CadastroProjeto;
 import meyn.cevn.modelo.projeto.Projeto;
-import meyn.cevn.modelo.usuario.Usuario;
+import meyn.cevn.util.FusoHorario;
 import meyn.util.modelo.ErroModelo;
-import meyn.util.modelo.cadastro.ErroCadastro;
 
 public class CadastroAcao extends CadastroNota<Acao> {
 
@@ -43,30 +42,29 @@ public class CadastroAcao extends CadastroNota<Acao> {
 	private static final String EXP_TITULO_LER_REVISAR = "Ler\\s-\\s\\S.*";
 
 	@SuppressWarnings("serial")
-	private static final Map<String, Integer> HORARIOS_LEMBRETES = Collections
-			.unmodifiableMap(new HashMap<String, Integer>() {
-				{
-					put("(D)", 1);
-					put("(S)", 2);
-					put("(Q)", 3);
-					put("(M)", 4);
-					put("(BM)", 5);
-					put("(TM)", 5);
-					put("(SM)", 5);
-					put("(A)", 6);
-				}
-			});
+	private static final Map<String, Integer> HORARIOS_LEMBRETES = new HashMap<String, Integer>() {
+		{
+			put("(D)", 1);
+			put("(S)", 2);
+			put("(Q)", 3);
+			put("(M)", 4);
+			put("(BM)", 4);
+			put("(TM)", 4);
+			put("(SM)", 5);
+			put("(A)", 6);
+		}
+	};
 
 	private final CadastroEtiqueta<Etiqueta> cadAtrib = new CadastroEtiqueta<Etiqueta>("<Atributo>") {
 	};
 
-	public CadastroAcao() throws ErroCadastro {
-		super(REPOSITORIO, GRUPO, true, false, true);
+	public CadastroAcao() throws ErroModelo {
+		super(REPOSITORIO, GRUPO, true, true, true);
 	}
 
 	@Override
-	protected void iniciarPropriedadesOT(Usuario usu, NoteMetadata mtd, Acao acao) throws ErroModelo {
-		super.iniciarPropriedadesOT(usu, mtd, acao);
+	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, Acao acao) throws ErroModelo {
+		super.iniciarPropriedadesEnt(usu, mtd, acao);
 		CacheNotebooks cacheNtb = CacheNotebooks.getCache(usu);
 		List<String> lsIdsTag = mtd.getTagGuids();
 
@@ -85,7 +83,7 @@ public class CadastroAcao extends CadastroNota<Acao> {
 	}
 
 	@Override
-	protected void iniciarPropriedadesRelacionamentoOT(Usuario usu, NoteMetadata mtd, Acao acao) throws ErroModelo {
+	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, NoteMetadata mtd, Acao acao) throws ErroModelo {
 		List<String> lsIdsTag = mtd.getTagGuids();
 		Collection<Projeto> clProjs = new ArrayList<Projeto>();
 		acao.setProjetos(clProjs);
@@ -114,8 +112,8 @@ public class CadastroAcao extends CadastroNota<Acao> {
 	}
 
 	@Override
-	public void validarPropriedadesOT(Usuario usu, Acao acao) {
-		super.validarPropriedadesOT(usu, acao);
+	public void validarPropriedadesEnt(Usuario usu, Acao acao) {
+		super.validarPropriedadesEnt(usu, acao);
 		Collection<String> clMsgs = acao.getMensagensValidacao();
 		// Título
 		String nome = acao.getNome();
@@ -142,11 +140,15 @@ public class CadastroAcao extends CadastroNota<Acao> {
 			} else {
 				String freq = nome.replaceFirst(EXP_TITULO_LEMBRETE, "$2");
 				if (!freq.equals("")) {
-					Calendar cal = Calendar.getInstance();
+					Calendar cal = Calendar.getInstance(FusoHorario.FORTALEZA);
 					cal.setTime(acao.getDataLembrete());
+					int horaRef = HORARIOS_LEMBRETES.get(freq);
 					int horaLemb = cal.get(Calendar.HOUR_OF_DAY);
-					if (horaLemb > HORARIOS_LEMBRETES.get(freq)) {
-						clMsgs.add("Horário da ação lembrete inválido");
+					int minLemb = cal.get(Calendar.MINUTE);
+					if (horaLemb > horaRef || (horaLemb == horaRef && minLemb > 2)
+							|| (horaLemb == horaRef - 1 && minLemb < 59) || horaLemb < horaRef - 1) {
+						clMsgs.add("Horário da ação lembrete inválido: " + horaLemb + ":" + minLemb + " (Ref: " + horaRef
+								+ ":00)");
 					}
 				}
 			}

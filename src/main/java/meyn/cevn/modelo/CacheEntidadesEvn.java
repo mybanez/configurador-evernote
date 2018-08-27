@@ -13,25 +13,26 @@ import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
 @SuppressWarnings("serial")
-public abstract class CacheOTEvn<TipoOT extends OTEvn<?>> extends CacheEvn<String, TipoOT> {
+abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEvn<String, TipoEnt> {
 	
-	private class CachePorNome extends Cache<String, TipoOT> {
-		void put(TipoOT ot) {
-			put(ot.getNome(), ot);
+	private class CachePorNome extends Cache<String, TipoEnt> {
+		CachePorNome() {
+			setLogger(CacheEntidadesEvn.this.getLogger());
+		}
+		void put(TipoEnt ent) {
+			put(ent.getNome(), ent);
 		}
 	}
 
+	private String chave;
+	private boolean entidadeValidavel = true;
+	private boolean validarEntidades = false;
 	private CachePorNome cacheNome = new CachePorNome();
 
 	@Override
-	public Logger getLogger() {
-		return super.getLogger();
-	}	
-	
-	@Override
-	public TipoOT put(String id, TipoOT ot) {
-		cacheNome.put(ot);
-		return super.put(id, ot);
+	public TipoEnt put(String id, TipoEnt ent) {
+		cacheNome.put(ent);
+		return super.put(id, ent);
 	}
 
 	@Override
@@ -40,39 +41,73 @@ public abstract class CacheOTEvn<TipoOT extends OTEvn<?>> extends CacheEvn<Strin
 		cacheNome.clear();
 	}
 
-	public Collection<TipoOT> consultarTodos() throws ErroModelo {
-		List<TipoOT> lsOTs = new ArrayList<TipoOT>(values());
-		Collections.sort(lsOTs, (a,b) -> a.getNome().compareTo(b.getNome()));
-		return lsOTs;
+	@Override
+	protected Logger getLogger() {
+		return super.getLogger();
+	}	
+	
+	@Override
+	protected void setLogger(Logger logger) {
+		super.setLogger(logger);
+	}
+	
+	protected String getChave() {
+		return chave;
 	}
 
-	public abstract Grupo<TipoOT> consultarPorGrupo(String nomeGrupo) throws ErroModelo;
-
-	public abstract Collection<TipoOT> consultarPorRepositorio(String nomeRepositorio) throws ErroModelo;
-
-	public Collection<TipoOT> consultarPorFiltro(Predicate<TipoOT> filtro) throws ErroModelo {
-		List<TipoOT> lsOTs = new ArrayList<TipoOT>(values());
-		lsOTs.removeIf(filtro.negate());
-		Collections.sort(lsOTs, (a,b) -> a.getNome().compareTo(b.getNome()));
-		return lsOTs;
+	protected void setChave(String chave) {
+		this.chave = chave;
 	}
 
-	public TipoOT consultarPorChavePrimaria(String id) throws ErroModelo {
-		TipoOT ot = get(id);
-		if (ot == null) {
+	protected boolean isEntidadeValidavel() {
+		return entidadeValidavel;
+	}
+
+	protected void setEntidadeValidavel(boolean validavel) {
+		this.entidadeValidavel = validavel;
+	}
+
+	protected boolean isValidarEntidades() {
+		return entidadeValidavel && validarEntidades;
+	}
+
+	protected void setValidarEntidades(boolean validarEntidades) {
+		this.validarEntidades = validarEntidades;
+	}
+	
+	protected Collection<TipoEnt> consultarTodos() throws ErroModelo {
+		List<TipoEnt> lsEnts = new ArrayList<TipoEnt>(values());
+		Collections.sort(lsEnts, (a,b) -> a.getNome().compareTo(b.getNome()));
+		return lsEnts;
+	}
+
+	protected abstract Grupo<TipoEnt> consultarPorGrupo(String nomeGrupo) throws ErroModelo;
+
+	protected abstract Collection<TipoEnt> consultarPorRepositorio(String nomeRepositorio) throws ErroModelo;
+
+	protected Collection<TipoEnt> consultarPorFiltro(Predicate<TipoEnt> filtro) throws ErroModelo {
+		List<TipoEnt> lsEnts = new ArrayList<TipoEnt>(values());
+		lsEnts.removeIf(filtro.negate());
+		Collections.sort(lsEnts, (a,b) -> a.getNome().compareTo(b.getNome()));
+		return lsEnts;
+	}
+
+	protected TipoEnt consultarPorChavePrimaria(String id) throws ErroModelo {
+		TipoEnt ent = get(id);
+		if (ent == null) {
 			throw new ErroItemNaoEncontrado(id);
 		}
-		return ot;
+		return ent;
 	}
 
-	public TipoOT consultarPorNome(String nome) throws ErroModelo {
+	protected TipoEnt consultarPorNome(String nome) throws ErroModelo {
 		if (size() > cacheNome.size()) {
 			throw new ErroModelo("Nome não é chave primária no cache: " + getClass());
 		}
-		TipoOT ot = cacheNome.get(nome);
-		if (ot == null) {
+		TipoEnt ent = cacheNome.get(nome);
+		if (ent == null) {
 			throw new ErroItemNaoEncontrado(nome);
 		}
-		return ot;
+		return ent;
 	}
 }

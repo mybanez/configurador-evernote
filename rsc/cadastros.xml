@@ -6,10 +6,6 @@
 		<classe>meyn.cevn.modelo.projeto.CadastroProjeto</classe>
 	</local>
 	<local>
-		<modelo>meyn.cevn.modelo.USUARIO</modelo>
-		<classe>meyn.cevn.modelo.usuario.CadastroUsuario</classe>
-	</local>
-	<local>
 		<modelo>meyn.cevn.modelo.INTERESSE</modelo>
 		<classe>meyn.cevn.modelo.interesse.CadastroInteresse</classe>
 	</local>

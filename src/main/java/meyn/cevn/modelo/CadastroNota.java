@@ -1,5 +1,6 @@
 package meyn.cevn.modelo;
 
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
@@ -16,79 +17,76 @@ import com.evernote.edam.type.NoteSortOrder;
 import com.evernote.edam.type.Notebook;
 import com.evernote.thrift.TException;
 
-import meyn.cevn.modelo.usuario.Usuario;
+import meyn.cevn.ClienteEvn;
+import meyn.cevn.util.FusoHorario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 
 public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<NoteMetadata, TipoNota> {
 
 	private static final String EXP_TITULO_PADRAO = "^\\S.+";
+	
+	private static final SimpleDateFormat FORMATO_DATA;
+	
+	static {
+		FORMATO_DATA = new SimpleDateFormat("dd/MM/yy - HH:mm:ss");
+		FORMATO_DATA.setTimeZone(FusoHorario.FORTALEZA);
+	}
+	
+	protected class ConsultaPadrao extends CacheNotasConsultas.InfoConsulta<TipoNota> {
 
-	protected class InfoCachePadrao extends CacheNotasConsulta.Info<TipoNota> {
-
-		public InfoCachePadrao() {
-			this(getMoldeOTPadrao());
-			getChavesCache().add(getChave());
-		}
-
-		public InfoCachePadrao(Class<?> moldeNota) {
-			setMoldeOT(moldeNota);
-
-			setIniciadorPropsOT((Usuario usu, NoteMetadata mtd, TipoNota nota) -> {
-				iniciarPropriedadesOT(usu, mtd, nota);
+		ConsultaPadrao() {
+			setTipoEntidade(CadastroNota.this.getTipoEntidade());
+			setEntidadeValidavel(CadastroNota.this.isEntidadeValidavel());
+			setIniciadorPropsEnt((Usuario usu, NoteMetadata mtd, TipoNota nota) -> {
+				iniciarPropriedadesEnt(usu, mtd, nota);
 			});
-			setIniciadorPropsRelOT((Usuario usu, NoteMetadata mtd, TipoNota nota) -> {
-				iniciarPropriedadesRelacionamentoOT(usu, mtd, nota);
+			setIniciadorPropsRelEnt((Usuario usu, NoteMetadata mtd, TipoNota nota) -> {
+				iniciarPropriedadesRelacionamentoEnt(usu, mtd, nota);
 			});
-			setValidadorPropsOT((Usuario usu, TipoNota nota) -> {
-				validarPropriedadesOT(usu, nota);
+			setValidadorPropsEnt((Usuario usu, TipoNota nota) -> {
+				validarPropriedadesEnt(usu, nota);
 			});
-
-			NotesMetadataResultSpec props = new NotesMetadataResultSpec();
-			props.setIncludeAttributes(true);
-			props.setIncludeContentLength(true);
-			props.setIncludeCreated(true);
-			props.setIncludeDeleted(true);
-			props.setIncludeNotebookGuid(true);
-			props.setIncludeTagGuids(true);
-			props.setIncludeTitle(true);
-			props.setIncludeUpdated(true);
-			setProps(props);
-
+			setLogger(CadastroNota.this.getLogger());
+			NotesMetadataResultSpec campos = new NotesMetadataResultSpec();
+			campos.setIncludeAttributes(true);
+			campos.setIncludeContentLength(true);
+			campos.setIncludeCreated(true);
+			campos.setIncludeDeleted(true);
+			campos.setIncludeNotebookGuid(true);
+			campos.setIncludeTagGuids(true);
+			campos.setIncludeTitle(true);
+			campos.setIncludeUpdated(true);
+			setCampos(campos);
 			NoteFilter filtro = new NoteFilter();
 			filtro.setOrder(NoteSortOrder.TITLE.getValue());
 			filtro.setAscending(true);
 			setFiltro(filtro);
-
-			setTexto(textoConsultaRepositorio);
-
+			setComando(comandoConsulta);
 			setGrupoHomonimoDeItemPermitido(grupoHomonimoDeItemPermitido);
+			getChavesCache().add(getChaveCache());
 		}
 	}
 
-	private final InfoCachePadrao infoCacheMoldePadrao;
+	private final ConsultaPadrao consultaPadrao;
 
-	private String textoConsultaRepositorio;
+	private String comandoConsulta;
 	private boolean grupoHomonimoDeItemPermitido;
 
-	protected CadastroNota(String nomeRepositorio) throws ErroCadastro {
-		this(nomeRepositorio, "");
+	protected CadastroNota(String nomeRepositorio, boolean validavel, boolean repositorioPilha) throws ErroCadastro {
+		this(nomeRepositorio, "", validavel, true, repositorioPilha);
 	}
 
-	protected CadastroNota(String nomeRepositorio, String nomeGrupo) throws ErroCadastro {
-		this(nomeRepositorio, nomeGrupo, true, false, false);
-	}
-
-	protected CadastroNota(String nomeRepositorio, String nomeGrupo, boolean grupoHomonimoDeItemPermitido,
-			boolean cacheInvalidoAposAtualizacao, boolean repositorioPilha) throws ErroCadastro {
-		super(nomeRepositorio, nomeGrupo, cacheInvalidoAposAtualizacao);
+	protected CadastroNota(String nomeRepositorio, String nomeGrupo, boolean validavel,
+			boolean grupoHomonimoDeItemPermitido, boolean repositorioPilha) throws ErroCadastro {
+		super(nomeRepositorio, nomeGrupo, validavel);
 		this.grupoHomonimoDeItemPermitido = grupoHomonimoDeItemPermitido;
-		this.textoConsultaRepositorio = (repositorioPilha ? "stack" : "notebook") + ":\"" + nomeRepositorio + "\"";
-		infoCacheMoldePadrao = new InfoCachePadrao();
+		this.comandoConsulta = (repositorioPilha ? "stack" : "notebook") + ":\"" + nomeRepositorio + "\"";
+		consultaPadrao = new ConsultaPadrao();
 	}
 
-	protected String getTextoConsultaRepositorio() {
-		return textoConsultaRepositorio;
+	protected String getComandoConsulta() {
+		return comandoConsulta;
 	}
 
 	protected boolean isGrupoHomonimoDeItemPermitido() {
@@ -100,15 +98,15 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override
-	protected CacheOTEvn<TipoNota> getCache(Usuario usu, Class<?> moldeNota) throws ErroModelo {
-		return (CacheOTEvn<TipoNota>) CacheNotasConsulta.getCache(usu).get(usu,
-				moldeNota.equals(getMoldeOTPadrao()) ? infoCacheMoldePadrao : new InfoCachePadrao(moldeNota));
+	@Override CacheEntidadesEvn<TipoNota> getCache(Usuario usu) throws ErroModelo {
+		return (CacheEntidadesEvn<TipoNota>) CacheNotasConsultas.getCache(usu).get(usu, consultaPadrao);
 	}
 
 	@Override
-	protected void iniciarPropriedadesOT(Usuario usu, NoteMetadata mtd, TipoNota nota) throws ErroModelo {
+	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, TipoNota nota) throws ErroModelo {
 		nota.setMetadado(mtd);
+		nota.setDataCriacao(FORMATO_DATA.format(new Date(mtd.getCreated())));
+		nota.setDataAlteracao(FORMATO_DATA.format(new Date(mtd.getUpdated())));
 		nota.setId(mtd.getGuid());
 		nota.setNome(mtd.getTitle());
 		NoteAttributes noteAtribs = mtd.getAttributes();
@@ -118,12 +116,28 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	}
 
 	@Override
-	protected void validarPropriedadesOT(Usuario usu, TipoNota nota) {
+	protected void validarPropriedadesEnt(Usuario usu, TipoNota nota) {
 		Collection<String> clMsgs = nota.getMensagensValidacao();
 		String nome = nota.getNome();
 		if (!nome.matches(EXP_TITULO_PADRAO)) {
 			clMsgs.add("Título vazio ou iniciando com espaços: " + nome);
 		}
+	}
+
+	protected void iniciarPropriedadesMetadado(Usuario usu, Note mtd, TipoNota nota) {
+		mtd.setTitle(nota.getNome());
+		NoteAttributes atribs = new NoteAttributes();
+		long agora = System.currentTimeMillis();
+		if (nota.isLembrete()) {
+			atribs.setReminderOrder(agora);
+			Date dt = nota.getDataLembrete();
+			if (dt != null) {
+				atribs.setReminderTime(dt.getTime());
+			}
+		}
+		mtd.setAttributes(atribs);
+		mtd.setContent(nota.getConteudo());
+		mtd.setUpdated(agora);
 	}
 
 	public void carregarConteudo(Usuario usu, TipoNota nota) throws ErroCadastro {
@@ -151,7 +165,6 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 			}
 			nota.setId(mtd.getGuid());
 			nota.setURL(usu.getPrefixoURL() + mtd.getGuid() + "/" + mtd.getGuid());
-			invalidarCaches(usu);
 			getLogger().info("incluído: {}", nota.getNome());
 			return nota;
 		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException | ErroModelo e) {
@@ -168,11 +181,25 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 				iniciarPropriedadesMetadado(usu, mtd, nota);
 				noteStore.updateNote(mtd);
 			}
-			invalidarCaches(usu);
 			getLogger().info("alterado: {}", nota.getNome());
 			return nota;
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException | ErroModelo e) {
+		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
 			throw new ErroCadastro("Erro atualizando nota: " + nota.getNome(), e);
+		}
+	}
+
+	@Override
+	public void excluirTodos(Usuario usu) throws ErroCadastro {
+		try {
+			NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
+			for (Nota nota : consultarTodos(usu)) {
+				synchronized (noteStore) {
+					noteStore.deleteNote(nota.getId());
+				}
+			}
+			getLogger().info("notas excluídas");
+		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException | ErroModelo e) {
+			throw new ErroCadastro("Erro excluindo notas", e);
 		}
 	}
 
@@ -183,23 +210,9 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 			synchronized (noteStore) {
 				noteStore.deleteNote(nota.getId());
 			}
-			invalidarCaches(usu);
 			getLogger().info("excluído: {}", nota.getNome());
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException | ErroModelo e) {
+		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
 			throw new ErroCadastro("Erro excluindo nota: " + nota.getNome(), e);
 		}
-	}
-
-	protected void iniciarPropriedadesMetadado(Usuario usu, Note mtd, TipoNota nota) throws ErroModelo {
-		mtd.setTitle(nota.getNome());
-		if (nota.isLembrete()) {
-			mtd.setAttributes(new NoteAttributes());
-			mtd.getAttributes().setReminderOrder(System.currentTimeMillis());
-			Date dt = nota.getDataLembrete();
-			if (dt != null) {
-				mtd.getAttributes().setReminderTime(dt.getTime());
-			}
-		}
-		mtd.setContent(nota.getConteudo());
 	}
 }

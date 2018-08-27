@@ -14,6 +14,7 @@ import meyn.cevn.modelo.CadastroNota;
 import meyn.cevn.modelo.ChavesModelo;
 import meyn.cevn.modelo.Etiqueta;
 import meyn.cevn.modelo.Nota;
+import meyn.cevn.modelo.Usuario;
 import meyn.cevn.modelo.acao.Acao;
 import meyn.cevn.modelo.acao.CadastroAcao;
 import meyn.cevn.modelo.interesse.CadastroInteresse;
@@ -21,7 +22,6 @@ import meyn.cevn.modelo.interesse.Interesse;
 import meyn.cevn.modelo.referencia.CadastroReferencia;
 import meyn.cevn.modelo.referencia.Referencia;
 import meyn.cevn.modelo.sumario.CadastroSumario;
-import meyn.cevn.modelo.usuario.Usuario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
@@ -33,19 +33,19 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 	
 	private final CadastroEtiqueta<Etiqueta> cadEtqProj = new CadastroEtiqueta<Etiqueta>("<2. Projeto>") {};
 
-	public CadastroProjeto() throws ErroCadastro {
-		super(REPOSITORIO, GRUPO, false, false, false);
+	public CadastroProjeto() throws ErroModelo {
+		super(REPOSITORIO, GRUPO, true, false, false);
 	}
 
 	@Override
-	protected void iniciarPropriedadesOT(Usuario usu, NoteMetadata mtd, Projeto proj) throws ErroModelo {
-		super.iniciarPropriedadesOT(usu, mtd, proj);
+	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, Projeto proj) throws ErroModelo {
+		super.iniciarPropriedadesEnt(usu, mtd, proj);
 		proj.setEtiqueta(cadEtqProj.consultarPorNome(usu, mtd.getTitle()));
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void iniciarPropriedadesRelacionamentoOT(Usuario usu, NoteMetadata mtd, Projeto proj) throws ErroModelo {
+	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, NoteMetadata mtd, Projeto proj) throws ErroModelo {
 		String idEtq = proj.getEtiqueta().getId();
 
 		CacheTags cacheTag = CacheTags.getCache(usu);
@@ -92,8 +92,8 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 	}
 
 	@Override
-	public void validarPropriedadesOT(Usuario usu, Projeto proj) {
-		super.validarPropriedadesOT(usu, proj);
+	public void validarPropriedadesEnt(Usuario usu, Projeto proj) {
+		super.validarPropriedadesEnt(usu, proj);
 		Collection<String> clMsgs = proj.getMensagensValidacao();
 		// Etiqueta
 		List<String> lsIdsTag = proj.getMetadado().getTagGuids();
@@ -107,9 +107,9 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 	}
 
 	@Override
-	public Projeto consultarPorChavePrimaria(Usuario usu, String id, Class<?> moldeOT) throws ErroCadastro {
+	public Projeto consultarPorChavePrimaria(Usuario usu, String id) throws ErroCadastro {
 		try {
-			return super.consultarPorChavePrimaria(usu, id, moldeOT);
+			return super.consultarPorChavePrimaria(usu, id);
 		} catch (ErroItemNaoEncontrado e) {
 			return consultarPorNome(usu, cadEtqProj.consultarPorChavePrimaria(usu, id).getNome());		
 		}

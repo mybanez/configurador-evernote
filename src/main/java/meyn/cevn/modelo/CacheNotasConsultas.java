@@ -1,7 +1,5 @@
 package meyn.cevn.modelo;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,135 +14,138 @@ import com.evernote.edam.notestore.NotesMetadataList;
 import com.evernote.edam.notestore.NotesMetadataResultSpec;
 import com.evernote.thrift.TException;
 
-import meyn.cevn.modelo.usuario.Usuario;
-import meyn.util.contexto.Contexto;
+import meyn.cevn.ClienteEvn;
+import meyn.util.Erro;
+import meyn.util.contexto.ContextoEmMemoria;
 import meyn.util.modelo.ErroModelo;
-import meyn.util.modelo.ot.FabricaOT;
+import meyn.util.modelo.entidade.FabricaEntidade;
 
 @SuppressWarnings("serial")
-public class CacheNotasConsulta extends CacheResultadosConsulta {
+public class CacheNotasConsultas extends CacheEntidadesConsultas {
 
-	public static class Info<TipoNota extends Nota> extends CacheResultadosConsulta.Info<NoteMetadata, TipoNota> {
+	protected static class InfoConsulta<TipoNota extends Nota> extends CacheEntidadesConsultas.InfoConsulta<NoteMetadata, TipoNota> {
 
-		private NotesMetadataResultSpec props;
+		private NotesMetadataResultSpec campos;
 		private NoteFilter filtro;
 		private boolean grupoHomonimoDeItemPermitido;
 
-		public String getTexto() {
+		String getComando() {
 			return filtro.getWords();
 		}
 
-		public void setTexto(String texto) {
+		void setComando(String texto) {
 			filtro.setWords(texto);
 		}
 
-		public NotesMetadataResultSpec getProps() {
-			return props;
+		NotesMetadataResultSpec getCampos() {
+			return campos;
 		}
 
-		public void setProps(NotesMetadataResultSpec props) {
-			this.props = props;
+		void setCampos(NotesMetadataResultSpec campos) {
+			this.campos = campos;
 		}
 
-		public NoteFilter getFiltro() {
+		NoteFilter getFiltro() {
 			return filtro;
 		}
 
-		public void setFiltro(NoteFilter filtro) {
+		void setFiltro(NoteFilter filtro) {
 			this.filtro = filtro;
 		}
 
-		public boolean isGrupoHomonimoDeItemPermitido() {
+		boolean isGrupoHomonimoDeItemPermitido() {
 			return grupoHomonimoDeItemPermitido;
 		}
 
-		public void setGrupoHomonimoDeItemPermitido(boolean grupoHomonimoDeItemPermitido) {
+		void setGrupoHomonimoDeItemPermitido(boolean grupoHomonimoDeItemPermitido) {
 			this.grupoHomonimoDeItemPermitido = grupoHomonimoDeItemPermitido;
 		}
 
-		public String getChave() {
-			return getTexto() + "-" + getMoldeOT().getName();
+		String getChaveCache() {
+			return getComando();
 		}
 
-		public CacheNotas<TipoNota> getInstancia(Contexto ctx) {
+		CacheNotas<TipoNota> criarCache(ContextoEmMemoria contexto) {
 			return new CacheNotas<TipoNota>() {
 				{
+					setContexto(contexto);
+					setLogger(InfoConsulta.this.getLogger());
+					setChave(getChaveCache());
+					setEntidadeValidavel(InfoConsulta.this.isEntidadeValidavel());
 					setGrupoHomonimoDeItemPermitido(grupoHomonimoDeItemPermitido);
-					setContexto(ctx);
 				}
 			};
 		}
 	}
 
-	public static CacheNotasConsulta getCache(Usuario usu) throws ErroModelo {
-		return (CacheNotasConsulta) getCache(usu, CacheNotasConsulta.class);
+	protected static CacheEntidadesConsultas getCache(Usuario usu) throws ErroModelo {
+		return (CacheEntidadesConsultas) getCache(usu, CacheNotasConsultas.class);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public CacheOTEvn<?> get(Usuario usu, CacheResultadosConsulta.Info<?, ?> infoCache) throws ErroModelo {
-		Info<Nota> infoCacheNotas = (Info<Nota>) infoCache;
+	protected CacheEntidadesEvn<?> get(Usuario usu, CacheEntidadesConsultas.InfoConsulta<?, ?> infoConsulta) throws ErroModelo {
+		InfoConsulta<Nota> infoConsultaNotas = (InfoConsulta<Nota>) infoConsulta;
 		try {
-			String chave = infoCacheNotas.getChave();
-			CacheOTEvn<?> cache = get(chave);
-			if (cache == null || !cache.isAtualizado()) {
-				CacheNotas<Nota> cacheNotas = infoCacheNotas.getInstancia(getContexto());
+			String chave = infoConsultaNotas.getChaveCache();
+			if (!containsKey(chave)) {
+				put(chave, infoConsultaNotas.criarCache(getContexto()));
+			}
+			CacheNotas<Nota> cacheNotas = (CacheNotas<Nota>) get(chave);
+			boolean emValidacao = cacheNotas.isValidarEntidades();
+			if (!cacheNotas.isAtualizado() || emValidacao) {
+				cacheNotas.clear();
 				cacheNotas.setAtualizado(true);
-				put(chave, cacheNotas);
+				cacheNotas.setValidarEntidades(false);
 				NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
 				int desloc = 0;
 				NotesMetadataList lsMtdsPag;
 				List<NoteMetadata> lsMtds = new ArrayList<NoteMetadata>();
 				do {
 					synchronized (noteStore) {
-						lsMtdsPag = noteStore.findNotesMetadata(infoCacheNotas.getFiltro(), desloc,
-								Constants.EDAM_USER_NOTES_MAX, infoCacheNotas.getProps());
+						lsMtdsPag = noteStore.findNotesMetadata(infoConsultaNotas.getFiltro(), desloc,
+								Constants.EDAM_USER_NOTES_MAX, infoConsultaNotas.getCampos());
 					}
 					lsMtds.addAll(lsMtdsPag.getNotes());
 					desloc += lsMtdsPag.getNotesSize();
 				} while (lsMtdsPag.getTotalNotes() > desloc);
-				if (isEmValidacao()) {
+				if (emValidacao) {
 					for (NoteMetadata mtd : lsMtds) {
-						Nota nota = FabricaOT.getInstancia(infoCacheNotas.getMoldeOT());
+						Nota nota = FabricaEntidade.getInstancia(infoConsultaNotas.getTipoEntidade());
 						nota.setMensagensValidacao(new ArrayList<String>());
 						try {
-							infoCacheNotas.getIniciadorPropsOT().executar(usu, mtd, nota);
-							infoCacheNotas.getValidadorPropsOT().executar(usu, nota);
-						} catch (Throwable t) {
-							StringWriter sw = new StringWriter();
-							PrintWriter pw = new PrintWriter(sw);
-							t.printStackTrace(pw);
-							nota.getMensagensValidacao().add(sw.toString());
+							infoConsultaNotas.getIniciadorPropsEnt().executar(usu, mtd, nota);
+							infoConsultaNotas.getValidadorPropsEnt().executar(usu, nota);
+						} catch (Exception e) {
+							nota.getMensagensValidacao().add(Erro.toString(e));
 						}
 						cacheNotas.put(mtd.getGuid(), nota);
-					}
-					for (Nota nota : cacheNotas.values()) {
-						try {
-							infoCacheNotas.getIniciadorPropsRelOT().executar(usu, nota.getMetadado(), nota);
-						} catch (Throwable t) {
-							StringWriter sw = new StringWriter();
-							PrintWriter pw = new PrintWriter(sw);
-							t.printStackTrace(pw);
-							nota.getMensagensValidacao().add(sw.toString());
-						}
 					}
 				} else {
 					for (NoteMetadata mtd : lsMtds) {
-						Nota nota = FabricaOT.getInstancia(infoCacheNotas.getMoldeOT());
-						infoCacheNotas.getIniciadorPropsOT().executar(usu, mtd, nota);
+						Nota nota = FabricaEntidade.getInstancia(infoConsultaNotas.getTipoEntidade());
+						infoConsultaNotas.getIniciadorPropsEnt().executar(usu, mtd, nota);
 						cacheNotas.put(mtd.getGuid(), nota);
 					}
+				}
+				if (emValidacao) {
 					for (Nota nota : cacheNotas.values()) {
-						infoCacheNotas.getIniciadorPropsRelOT().executar(usu, nota.getMetadado(), nota);
+						try {
+							infoConsultaNotas.getIniciadorPropsRelEnt().executar(usu, nota.getMetadado(), nota);
+						} catch (Exception e) {
+							nota.getMensagensValidacao().add(Erro.toString(e));
+						}
+					}
+				} else {
+					for (Nota nota : cacheNotas.values()) {
+						infoConsultaNotas.getIniciadorPropsRelEnt().executar(usu, nota.getMetadado(), nota);
 					}
 				}
-				cache = cacheNotas;
-				cache.getLogger().debug("atualizado - "+chave);
+				cacheNotas.getLogger().debug("atualizado");
 			}
-			return cache;
+			return cacheNotas;
 		} catch (EDAMUserException | EDAMSystemException | TException | EDAMNotFoundException e) {
-			throw new ErroModelo("Erro atualizando cache: " + infoCacheNotas.getChave(), e);
+			throw new ErroModelo("Erro atualizando cache: " + infoConsultaNotas.getChaveCache(), e);
 		}
 	}
-
 }

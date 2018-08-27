@@ -1,22 +1,24 @@
-package meyn.cevn.modelo.usuario;
+package meyn.cevn.modelo;
 
 import com.evernote.auth.EvernoteService;
 
-import meyn.util.contexto.Contexto;
-import meyn.util.modelo.ot.OT;
+import meyn.cevn.ContextoEvn;
+import meyn.util.modelo.entidade.Entidade;
 
-public interface Usuario extends OT {
+public interface Usuario extends Entidade {
 	String getId();
 	void setId(String id);
-	Contexto getContexto();
-	void setContexto(Contexto ctx);
+	ContextoEvn getContexto();
+	void setContexto(ContextoEvn contexto);
 	
 	EvernoteService getEvernoteService();
-	void setEvernoteService(EvernoteService srv);
+	void setEvernoteService(EvernoteService servico);
 	String getToken();
-	void setToken(String tkn);
+	void setToken(String token);
 	int getContadorAtualizacao();
 	void setContadorAtualizacao(int contadorAtualizacao);
 	String getPrefixoURL();
 	void setPrefixoURL(String prefixoURL);
+	Nota getLog();
+	void setLog(Nota log);
 }

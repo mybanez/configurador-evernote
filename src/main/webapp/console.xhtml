@@ -3,15 +3,387 @@
 	xmlns:f="http://java.sun.com/jsf/core"
 	xmlns:p="http://primefaces.org/ui">
 <h:head>
+	<link rel="stylesheet" type="text/css" href="/console.css" />
 </h:head>
 <h:body>
- 	<p:dataTable id="tabIntr" var="intr" value="#{console.interesses}" paginator="true" emptyMessage="Lista de interesses vazia"
-		paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-		rowsPerPageTemplate="10,15,25,50,100">
-		<f:facet name="header">Interesses</f:facet>
-		<p:column headerText="nome" style="width: 25%;" sortBy="#{intr.nome}">	
-			<h:outputText value="#{intr.nome}" />
-		</p:column>
-	</p:dataTable>
+	<script type="text/javascript" src="/console.js" />
+	<h:inputHidden id="resultado"
+		rendered="${not empty param.sumario ? true : false}"
+		value="${console.resultadoGeracaoSumariosParametro}" />
+	<script type="text/javascript">
+		testarResultadoOperacao();
+	</script>
+	<div class="ui-painel-overlay" id="painelImgProc">
+		<h:graphicImage id="imgProc" value="/Processando.gif"></h:graphicImage>
+	</div>
+	<h:panelGrid columns="2" styleClass="ui-cabecalho-cevn"
+		columnClasses="ui-cabecalho-col1-cevn,ui-cabecalho-col2-cevn">
+		<h:panelGroup>
+			<h:panelGrid columns="1" style="width: 100%;"
+				columnClasses="ui-logo-col1-cevn">
+				<h:panelGroup>
+					<h:outputText styleClass="ui-logo-texto-cevn"
+						value="CONFIGURADOR EVERNOTE" />
+				</h:panelGroup>
+				<h:panelGroup>
+					<h:graphicImage styleClass="ui-logo-img-cevn" value="/Evernote.jpg" />
+				</h:panelGroup>
+			</h:panelGrid>
+		</h:panelGroup>
+		<h:panelGroup rendered="${empty param.sumario ? true : false}">
+			<h:form id="console">
+				<h:panelGrid id="tab_input" columns="4" styleClass="ui-console-cevn"
+					columnClasses="ui-console-col-cevn,ui-console-col-cevn,ui-console-col-cevn,ui-console-col-cevn">
+					<f:facet name="header">
+						<h:panelGroup>
+							<h:panelGrid styleClass="ui-console-cab-cevn" columns="3"
+								columnClasses="ui-console-cab-col-cevn,ui-console-cab-col-cevn,ui-console-cab-col-cevn">
+								<h:panelGroup>
+									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
+										id="chk" />
+									Todos
+								</h:panelGroup>
+								<h:panelGroup>
+									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
+										id="chkSum" />
+									Sumários
+								</h:panelGroup>
+								<h:panelGroup>
+									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
+										id="chkVal" />
+									Validações
+								</h:panelGroup>
+							</h:panelGrid>
+						</h:panelGroup>
+					</f:facet>
+					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+						<h:selectBooleanCheckbox
+							onclick="trocarCheckBoxes(this,'Interesses')" id="chkInteresses" />
+							Interesses
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+						<h:selectBooleanCheckbox
+							onclick="trocarCheckBoxes(this,'Projetos')" id="chkProjetos" />
+							Projetos
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+						<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this,'Acoes')"
+							id="chkAcoes" />
+							Ações
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+						<h:selectBooleanCheckbox
+							onclick="trocarCheckBoxes(this,'Referencias')"
+							id="chkReferencias" />
+							Referências
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-texto-cevn">
+						<div>
+							<h:selectBooleanCheckbox id="chkSumInteressesCol"
+								value="#{console.gerarSumInteressesCol}" />
+							Sumários coletivos
+						</div>
+						<div>
+							<h:selectBooleanCheckbox id="chkSumInteressesInd"
+								value="#{console.gerarSumInteressesInd}" />
+							Sumários individuais
+						</div>
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-texto-cevn">
+						<div>
+							<h:selectBooleanCheckbox id="chkSumProjetosCol"
+								value="#{console.gerarSumProjetosCol}" />
+							Sumários coletivos
+						</div>
+						<div>
+							<h:selectBooleanCheckbox id="chkSumProjetosInd"
+								value="#{console.gerarSumProjetosInd}" />
+							Sumários individuais
+						</div>
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-texto-cevn">
+						<h:selectBooleanCheckbox id="chkSumAcoesCol"
+							value="#{console.gerarSumAcoesCol}" />
+							Sumários coletivos
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-texto-cevn">
+						<h:selectBooleanCheckbox id="chkSumReferenciasCol"
+							value="#{console.gerarSumReferenciasCol}" />
+							Sumários coletivos
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-texto-cevn" />
+					<h:panelGroup styleClass="ui-console-texto-cevn">
+						<div>
+							<h:selectBooleanCheckbox id="chkValProjetosCol"
+								value="#{console.gerarValProjetosCol}" />
+							Validações coletivas
+						</div>
+						<div>
+							<h:selectBooleanCheckbox id="chkValProjetosInd"
+								value="#{console.gerarValProjetosInd}" />
+							Validações individuais
+						</div>
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-texto-cevn">
+						<h:selectBooleanCheckbox id="chkValAcoesCol"
+							value="#{console.gerarValAcoesCol}" />
+							Validações coletivas
+					</h:panelGroup>
+					<h:panelGroup styleClass="ui-console-texto-cevn">
+						<h:selectBooleanCheckbox id="chkValReferenciasCol"
+							value="#{console.gerarValReferenciasCol}" />
+							Validações coletivas
+					</h:panelGroup>
+					<f:facet name="footer">
+						<div class="ui-console-rod-cevn">
+							<p:commandButton onstart="ligarAtualizadorTela()" async="true"
+								process="@form" update="paineis:console"
+								actionListener="#{console.gerarSumariosConsole}"
+								value="Gerar Sumários" style="font-size: 12pt;" id="btGerar" />
+							<p:poll oncomplete="desligarAtualizadorTela()"
+								id="atualizadorTela" widgetVar="atualizadorTela" async="true"
+								autoStart="false" interval="3" process="@none"
+								update="paineis:console paineis:sumarios:tabela paineis:logs:tabela" />
+						</div>
+					</f:facet>
+				</h:panelGrid>
+			</h:form>
+		</h:panelGroup>
+	</h:panelGrid>
+	<br />
+	<p:tabView styleClass="ui-paineis" id="paineis">
+		<p:tab title="Console">
+			<h:form id="console">
+				<p:growl widgetVar="mensagem" showDetail="true" />
+				<h:inputHidden id="processos" readonly="true"
+					value="${console.contadorProcessos}" />
+				<h:inputHidden id="status" readonly="true"
+					value="${console.statusProcessamento}" />
+				<h:panelGrid columns="3"
+					columnClasses="ui-saida-tempo-cevn,ui-saida-limpar-cevn,ui-saida-log-cevn"
+					style="width: 100%;">
+					<h:panelGroup style="width: 100%;">Última execução: <h:outputText
+							id="tempo" value="#{console.tempoProcessamento}" />
+					</h:panelGroup>
+					<h:panelGroup style="width: 100%;"
+						rendered="${empty param.sumario ? true : false}">
+						<p:commandButton style="font-size: 9pt;" async="true"
+							process="@this" update="paineis:console"
+							actionListener="#{console.limparSaida}" id="btLimpar"
+							value="Limpar" />
+					</h:panelGroup>
+					<h:panelGroup style="width: 100%;">
+						<h:outputLink class="ui-link-cevn-2" value="#{console.urlLog}">Log da sessão</h:outputLink>
+					</h:panelGroup>
+					<f:facet name="footer">
+						<h:panelGroup>
+							<p:tabView id="saida">
+								<p:tab title="Saída"
+									rendered="${empty param.sumario ? true : false}">
+									<div id="paineis:console:saida:janela" class="ui-saida-cevn">
+										<pre>
+											<h:outputText id="padrao" value="#{console.saidaPadrao}" />
+										</pre>
+									</div>
+									<script type="text/javascript">
+										atualizarPosicaoJanela();
+									</script>
+								</p:tab>
+								<p:tab title="Erro"
+									rendered="${not empty console.saidaErro ? true : false}">
+									<div class="ui-saida-cevn">
+										<pre>
+											<h:outputText id="erro" value="#{console.saidaErro}" />
+										</pre>
+									</div>
+								</p:tab>
+							</p:tabView>
+						</h:panelGroup>
+					</f:facet>
+				</h:panelGrid>
+			</h:form>
+		</p:tab>
+		<p:tab title="Sumários"
+			rendered="${empty param.sumario ? true : false}">
+			<h:form id="sumarios">
+				<div class="ui-painel-cab-cevn">
+					<p:commandButton async="true" process="@this"
+						update="paineis:sumarios" action="#{console.recarregarEntidade}"
+						value="Recarregar" style="font-size: 10pt;" id="btRecarregarSums">
+						<f:param name="modelo" value="sumario" />
+					</p:commandButton>
+					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
+						process="@this" update="paineis:console"
+						actionListener="#{console.excluirSumarios}" value="Excluir Todos"
+						style="font-size: 10pt;" id="btExcluirSums" />
+				</div>
+				<p:dataTable id="tabela" var="sum" value="#{console.sumarios}"
+					filteredValue="#{console.sumariosFiltrado}" rows="10"
+					paginator="true" emptyMessage="Lista de sumários vazia"
+					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					rowsPerPageTemplate="10,15,25,50,100">
+					<p:column filterBy="#{sum.dataCriacao}" filterMatchMode="contains"
+						headerText="Criação" style="width: 16%;"
+						sortBy="#{sum.dataCriacao}">
+						<h:outputText value="#{sum.dataCriacao}" />
+					</p:column>
+					<p:column filterBy="#{sum.dataAlteracao}"
+						filterMatchMode="contains" headerText="Alteração"
+						style="width: 16%;" sortBy="#{sum.dataAlteracao}">
+						<h:outputText value="#{sum.dataAlteracao}" />
+					</p:column>
+					<p:column filterBy="#{sum.nome}" filterMatchMode="contains"
+						headerText="Nome" style="width: 34%;" sortBy="#{sum.nome}">
+						<h:outputText value="#{sum.nome}" />
+					</p:column>
+					<p:column headerText="Id" style="width: 34%;" sortBy="#{sum.id}">
+						<h:outputLink value="#{sum.URL}" styleClass="ui-link-cevn-1">
+							<h:outputText value="#{sum.id}" />
+						</h:outputLink>
+					</p:column>
+				</p:dataTable>
+			</h:form>
+		</p:tab>
+		<p:tab title="Interesses"
+			rendered="${empty param.sumario ? true : false}">
+			<h:form id="interesses">
+				<div class="ui-painel-cab-cevn">
+					<p:commandButton async="true" process="@this"
+						update="paineis:interesses" action="#{console.recarregarEntidade}"
+						value="Recarregar" style="font-size: 10pt;" id="btRecarregarIntrs">
+						<f:param name="modelo" value="interesse" />
+					</p:commandButton>
+				</div>
+				<p:dataTable id="tabela" var="intr" value="#{console.interesses}"
+					filteredValue="#{console.interessesFiltrado}" rows="10"
+					paginator="true" emptyMessage="Lista de interesses vazia"
+					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					rowsPerPageTemplate="10,15,25,50,100">
+					<p:column filterBy="#{intr.nome}" filterMatchMode="contains"
+						headerText="Nome" style="width: 60%;" sortBy="#{intr.nome}">
+						<h:outputText value="#{intr.nome}" />
+					</p:column>
+					<p:column headerText="Id" style="width: 40%;" sortBy="#{intr.id}">
+						<h:outputLink value="#{intr.sumario.URL}"
+							styleClass="ui-link-cevn-1">
+							<h:outputText value="#{intr.id}" />
+						</h:outputLink>
+					</p:column>
+				</p:dataTable>
+			</h:form>
+		</p:tab>
+		<p:tab title="Projetos"
+			rendered="${empty param.sumario ? true : false}">
+			<h:form id="projetos">
+				<div class="ui-painel-cab-cevn">
+					<p:commandButton async="true" process="@this"
+						update="paineis:projetos" action="#{console.recarregarEntidade}"
+						value="Recarregar" style="font-size: 10pt;" id="btRecarregarProjs">
+						<f:param name="modelo" value="projeto" />
+					</p:commandButton>
+				</div>
+				<p:dataTable id="tabela" var="proj" value="#{console.projetos}"
+					filteredValue="#{console.projetosFiltrado}" rows="10"
+					paginator="true" emptyMessage="Lista de projetos vazia"
+					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					rowsPerPageTemplate="10,15,25,50,100">
+					<p:column filterBy="#{proj.nome}" filterMatchMode="contains"
+						headerText="Nome" style="width: 60%;" sortBy="#{proj.nome}">
+						<h:outputText value="#{proj.nome}" />
+					</p:column>
+					<p:column headerText="Id" style="width: 40%;" sortBy="#{proj.id}">
+						<h:outputLink value="#{proj.URL}" styleClass="ui-link-cevn-1">
+							<h:outputText value="#{proj.id}" />
+						</h:outputLink>
+					</p:column>
+				</p:dataTable>
+			</h:form>
+		</p:tab>
+		<p:tab title="Ações" rendered="${empty param.sumario ? true : false}">
+			<h:form id="acoes">
+				<div class="ui-painel-cab-cevn">
+					<p:commandButton async="true" process="@this"
+						update="paineis:acoes" action="#{console.recarregarEntidade}"
+						value="Recarregar" style="font-size: 10pt;" id="btRecarregarAcoes">
+						<f:param name="modelo" value="acao" />
+					</p:commandButton>
+				</div>
+				<p:dataTable id="tabela" var="acao" value="#{console.acoes}"
+					filteredValue="#{console.acoesFiltrado}" rows="10" paginator="true"
+					emptyMessage="Lista de ações vazia"
+					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					rowsPerPageTemplate="10,15,25,50,100">
+					<p:column filterBy="#{acao.nome}" filterMatchMode="contains"
+						headerText="Nome" style="width: 60%;" sortBy="#{acao.nome}">
+						<h:outputText value="#{acao.nome}" />
+					</p:column>
+					<p:column headerText="Id" style="width: 40%;" sortBy="#{acao.id}">
+						<h:outputLink value="#{acao.URL}" styleClass="ui-link-cevn-1">
+							<h:outputText value="#{acao.id}" />
+						</h:outputLink>
+					</p:column>
+				</p:dataTable>
+			</h:form>
+		</p:tab>
+		<p:tab title="Referências"
+			rendered="${empty param.sumario ? true : false}">
+			<h:form id="referencias">
+				<div class="ui-painel-cab-cevn">
+					<p:commandButton async="true" process="@this"
+						update="paineis:referencias"
+						action="#{console.recarregarEntidade}" value="Recarregar"
+						style="font-size: 10pt;" id="btRecarregarRefs">
+						<f:param name="modelo" value="referencia" />
+					</p:commandButton>
+				</div>
+				<p:dataTable id="tabela" var="ref" value="#{console.referencias}"
+					filteredValue="#{console.referenciasFiltrado}" rows="10"
+					paginator="true" emptyMessage="Lista de referências vazia"
+					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					rowsPerPageTemplate="10,15,25,50,100">
+					<p:column filterBy="#{ref.nome}" filterMatchMode="contains"
+						headerText="Nome" style="width: 60%;" sortBy="#{ref.nome}">
+						<h:outputText value="#{ref.nome}" />
+					</p:column>
+					<p:column headerText="Id" style="width: 40%;" sortBy="#{ref.id}">
+						<h:outputLink value="#{ref.URL}" styleClass="ui-link-cevn-1">
+							<h:outputText value="#{ref.id}" />
+						</h:outputLink>
+					</p:column>
+				</p:dataTable>
+			</h:form>
+		</p:tab>
+		<p:tab title="Configurador"
+			rendered="${empty param.sumario ? true : false}">
+			<h:form id="logs">
+				<div class="ui-painel-cab-cevn">
+					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
+						process="@this" update="paineis:logs"
+						actionListener="#{console.excluirLogs}"
+						value="Excluir Logs Antigos" style="font-size: 10pt;"
+						id="btExcluirLogs" />
+				</div>
+				<p:dataTable id="tabela" var="log" value="#{console.logs}" rows="10"
+					paginator="true" emptyMessage="Lista de logs vazia"
+					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+					rowsPerPageTemplate="10,15,25,50,100">
+					<p:column filterBy="#{log.dataAlteracao}"
+						filterMatchMode="contains" headerText="Alteração"
+						style="width: 16%;" sortBy="#{log.dataAlteracao}">
+						<h:outputText value="#{log.dataAlteracao}" />
+					</p:column>
+					<p:column headerText="Nome" style="width: 44%;"
+						sortBy="#{log.nome}">
+						<h:outputText value="#{log.nome}" />
+					</p:column>
+					<p:column headerText="Id" style="width: 44%;" sortBy="#{log.id}">
+						<h:outputLink value="#{log.URL}" styleClass="ui-link-cevn-1">
+							<h:outputText value="#{log.id}" />
+						</h:outputLink>
+					</p:column>
+				</p:dataTable>
+			</h:form>
+		</p:tab>
+	</p:tabView>
 </h:body>
 </html>

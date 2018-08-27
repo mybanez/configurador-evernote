@@ -4,9 +4,9 @@ import java.util.Collection;
 
 import com.evernote.thrift.TBase;
 
-import meyn.util.modelo.ot.OT;
+import meyn.util.modelo.entidade.Entidade;
 
-public interface OTEvn<TipoMtd extends TBase<?>> extends OT {
+public interface EntidadeEvn<TipoMtd extends TBase<?>> extends Entidade {
 	TipoMtd getMetadado();
 	void setMetadado(TipoMtd mtd);
 	String getId();

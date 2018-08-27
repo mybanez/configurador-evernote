@@ -1,75 +1,85 @@
 package meyn.cevn.modelo;
 
+import java.util.Collection;
+
+import org.apache.logging.log4j.Logger;
+
 import com.evernote.thrift.TBase;
 
-import meyn.cevn.modelo.usuario.Usuario;
 import meyn.util.modelo.ErroModelo;
 
 @SuppressWarnings("serial")
-public abstract class CacheResultadosConsulta extends CacheEvn<String, CacheOTEvn<?>> {
+abstract class CacheEntidadesConsultas extends CacheEvn<String, CacheEntidadesEvn<?>> {
 
 	@FunctionalInterface
-	public static interface IniciadorPropriedadesOT<TipoMtd extends TBase<?>, TipoOT extends OTEvn<?>> {
-		void executar(Usuario usu, TipoMtd mtd, TipoOT moldeOT) throws ErroModelo;
+	protected static interface IniciadorPropriedadesEnt<TipoMtd extends TBase<?>, TipoEnt extends EntidadeEvn<?>> {
+		void executar(Usuario usu, TipoMtd mtd, TipoEnt ent) throws ErroModelo;
 	}
 
 	@FunctionalInterface
-	public static interface ValidadorPropriedadesOT<TipoOT extends OTEvn<?>> {
-		void executar(Usuario usu, TipoOT ot) throws ErroModelo;
-	}
-	
-	public static abstract class Info<TipoMtd extends TBase<?>, TipoOT extends OTEvn<?>> {
-
-		private Class<?> moldeOT;
-		private IniciadorPropriedadesOT<TipoMtd, TipoOT> iniciadorPropsOT;
-		private IniciadorPropriedadesOT<TipoMtd, TipoOT> iniciadorPropsRelOT;
-		private ValidadorPropriedadesOT<TipoOT> validadorPropsOT;
-
-		public Class<?> getMoldeOT() {
-			return moldeOT;
-		}
-
-		public void setMoldeOT(Class<?> moldeOT) {
-			this.moldeOT = moldeOT;
-		}
-
-		public IniciadorPropriedadesOT<TipoMtd, TipoOT> getIniciadorPropsOT() {
-			return iniciadorPropsOT;
-		}
-
-		public void setIniciadorPropsOT(IniciadorPropriedadesOT<TipoMtd, TipoOT> iniciadorPropsOT) {
-			this.iniciadorPropsOT = iniciadorPropsOT;
-		}
-
-		public IniciadorPropriedadesOT<TipoMtd, TipoOT> getIniciadorPropsRelOT() {
-			return iniciadorPropsRelOT;
-		}
-
-		public void setIniciadorPropsRelOT(IniciadorPropriedadesOT<TipoMtd, TipoOT> iniciadorPropsRelOT) {
-			this.iniciadorPropsRelOT = iniciadorPropsRelOT;
-		}
-		
-		public ValidadorPropriedadesOT<TipoOT> getValidadorPropsOT() {
-			return validadorPropsOT;
-		}
-
-		public void setValidadorPropsOT(ValidadorPropriedadesOT<TipoOT> validadorPropsOT) {
-			this.validadorPropsOT = validadorPropsOT;
-		}
-
-		public abstract String getChave();
+	protected static interface ValidadorPropriedadesEnt<TipoEnt extends EntidadeEvn<?>> {
+		void executar(Usuario usu, TipoEnt ent) throws ErroModelo;
 	}
 
-	public void ativarValidacaoOT() throws ErroModelo {
-		setEmValidacao(true);
-		setAtualizado(false);
+	protected static abstract class InfoConsulta<TipoMtd extends TBase<?>, TipoEnt extends EntidadeEvn<?>> {
+
+		private Class<?> tipoEntidade;
+		private boolean entidadeValidavel;
+		private IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsEnt;
+		private IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsRelEnt;
+		private ValidadorPropriedadesEnt<TipoEnt> validadorPropsEnt;
+		private Logger logger;
+
+		Class<?> getTipoEntidade() {
+			return tipoEntidade;
+		}
+
+		void setTipoEntidade(Class<?> tipoEntidade) {
+			this.tipoEntidade = tipoEntidade;
+		}
+
+		boolean isEntidadeValidavel() {
+			return entidadeValidavel;
+		}
+
+		void setEntidadeValidavel(boolean entidadeValidavel) {
+			this.entidadeValidavel = entidadeValidavel;
+		}
+
+		IniciadorPropriedadesEnt<TipoMtd, TipoEnt> getIniciadorPropsEnt() {
+			return iniciadorPropsEnt;
+		}
+
+		void setIniciadorPropsEnt(IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsEnt) {
+			this.iniciadorPropsEnt = iniciadorPropsEnt;
+		}
+
+		IniciadorPropriedadesEnt<TipoMtd, TipoEnt> getIniciadorPropsRelEnt() {
+			return iniciadorPropsRelEnt;
+		}
+
+		void setIniciadorPropsRelEnt(IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsRelEnt) {
+			this.iniciadorPropsRelEnt = iniciadorPropsRelEnt;
+		}
+
+		ValidadorPropriedadesEnt<TipoEnt> getValidadorPropsEnt() {
+			return validadorPropsEnt;
+		}
+
+		void setValidadorPropsEnt(ValidadorPropriedadesEnt<TipoEnt> validadorPropsEnt) {
+			this.validadorPropsEnt = validadorPropsEnt;
+		}
+
+		Logger getLogger() {
+			return logger;
+		}
+
+		void setLogger(Logger logger) {
+			this.logger = logger;
+		}
 	}
 
-	public void desativarValidacaoOT() {
-		setEmValidacao(false);
-	}
-
-	public static <TipoChave, TipoValor> CacheEvn<TipoChave, TipoValor> getCache(Usuario usu,
+	protected static <TipoChave, TipoValor> CacheEvn<TipoChave, TipoValor> getCache(Usuario usu,
 			Class<? extends CacheEvn<TipoChave, TipoValor>> tipo) throws ErroModelo {
 		CacheEvn<TipoChave, TipoValor> cache = CacheEvn.getCache(usu, tipo);
 		if (!cache.isAtualizado()) {
@@ -79,15 +89,19 @@ public abstract class CacheResultadosConsulta extends CacheEvn<String, CacheOTEv
 		return cache;
 	}
 
-	private boolean emValidacao = false;
+	protected abstract CacheEntidadesEvn<?> get(Usuario usu, InfoConsulta<?, ?> infoCache) throws ErroModelo;
 
-	public boolean isEmValidacao() {
-		return emValidacao;
+	protected void invalidarCaches(Collection<String> clChavesCaches) throws ErroModelo {
+		for (String chave : clChavesCaches) {
+			if (containsKey(chave)) {
+				get(chave).setAtualizado(false);
+			}
+		}
 	}
 
-	public void setEmValidacao(boolean emValidacao) {
-		this.emValidacao = emValidacao;
+	protected void validarEntidades() throws ErroModelo {
+		for (CacheEntidadesEvn<?> cache : values()) {
+			cache.setValidarEntidades(true);
+		}
 	}
-
-	public abstract CacheOTEvn<?> get(Usuario usu, Info<?, ?> infoCache) throws ErroModelo;
 }

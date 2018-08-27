@@ -4,7 +4,11 @@ import java.util.Date;
 
 import com.evernote.edam.notestore.NoteMetadata;
 
-public interface Nota extends OTEvn<NoteMetadata> {
+public interface Nota extends EntidadeEvn<NoteMetadata> {
+	String getDataCriacao();
+	void setDataCriacao(String dtCriacao);
+	String getDataAlteracao();
+	void setDataAlteracao(String dtAlteracao);	
 	boolean isLembrete();
 	void setLembrete(boolean isLembrete);
 	Date getDataLembrete();

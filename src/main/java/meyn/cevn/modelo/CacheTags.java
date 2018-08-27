@@ -11,7 +11,7 @@ import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.type.Tag;
 import com.evernote.thrift.TException;
 
-import meyn.cevn.modelo.usuario.Usuario;
+import meyn.cevn.ClienteEvn;
 import meyn.util.Cache;
 import meyn.util.modelo.ErroModelo;
 
@@ -64,7 +64,7 @@ public class CacheTags extends CacheEvn<String, Tag> {
 		}
 	}
 
-	public List<String> consultarPorRepositorio(String nomeRepo) {
+	public synchronized List<String> consultarPorRepositorio(String nomeRepo) {
 		return new ArrayList<String>(cacheRepo.getOrDefault(nomeRepo, Collections.emptyList()));
 	}
 }

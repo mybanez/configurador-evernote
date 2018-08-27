@@ -4,5 +4,7 @@
   <sessions-enabled>true</sessions-enabled>
   <runtime>java8</runtime>
   <async-session-persistence enabled="false" />
-  <url-stream-handler>urlfetch</url-stream-handler>
+  <basic-scaling>
+    <max-instances>1</max-instances>
+  </basic-scaling>  
 </appengine-web-app>

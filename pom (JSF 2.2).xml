@@ -30,7 +30,7 @@
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
+			<artifactId>javax.servlet-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -54,10 +54,6 @@
 			<artifactId>jsf-impl</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>com.sun.el</groupId>
-			<artifactId>el-ri</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>org.primefaces</groupId>
 			<artifactId>primefaces</artifactId>
 		</dependency>
@@ -73,6 +69,14 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-text</artifactId>
 		</dependency>
+		<dependency>
+		    <groupId>javax.el</groupId>
+		    <artifactId>javax.el-api</artifactId>
+		</dependency>
+		<dependency>
+		    <groupId>org.glassfish.web</groupId>
+		    <artifactId>javax.el</artifactId>
+		</dependency>		
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
@@ -97,29 +101,14 @@
 				<version>1.9.64</version>
 			</dependency>
 			<dependency>
-				<groupId>com.sun.faces</groupId>
-				<artifactId>jsf-api</artifactId>
-				<version>2.0.2</version>
-			</dependency>
-			<dependency>
 				<groupId>org.primefaces</groupId>
 				<artifactId>primefaces</artifactId>
-				<version>4.0</version>
-			</dependency>
-			<dependency>
-				<groupId>com.sun.faces</groupId>
-				<artifactId>jsf-impl</artifactId>
-				<version>2.0.2</version>
-			</dependency>
-			<dependency>
-				<groupId>com.sun.el</groupId>
-				<artifactId>el-ri</artifactId>
-				<version>1.0</version>
+				<version>6.2</version>
 			</dependency>
 			<dependency>
 				<groupId>javax.servlet</groupId>
-				<artifactId>servlet-api</artifactId>
-				<version>2.5</version>
+				<artifactId>javax.servlet-api</artifactId>
+				<version>3.1.0</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.logging.log4j</groupId>
@@ -135,6 +124,26 @@
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-text</artifactId>
 				<version>1.4</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sun.faces</groupId>
+				<artifactId>jsf-api</artifactId>
+				<version>2.2.8-06</version>
+			</dependency>
+			<dependency>
+				<groupId>com.sun.faces</groupId>
+				<artifactId>jsf-impl</artifactId>
+				<version>2.2.8-06</version>
+			</dependency>
+			<dependency>
+				<groupId>javax.el</groupId>
+				<artifactId>javax.el-api</artifactId>
+				<version>2.2.5</version>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish.web</groupId>
+				<artifactId>javax.el</artifactId>
+				<version>2.2.5</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

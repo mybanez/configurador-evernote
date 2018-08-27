@@ -5,16 +5,14 @@ import java.util.List;
 
 import com.evernote.edam.type.Tag;
 
-import meyn.cevn.modelo.usuario.Usuario;
-import meyn.util.contexto.Contexto;
+import meyn.util.contexto.ContextoEmMemoria;
 import meyn.util.modelo.ErroModelo;
-import meyn.util.modelo.ot.FabricaOT;
+import meyn.util.modelo.entidade.FabricaEntidade;
 
 @SuppressWarnings("serial")
-public class CacheEtiquetasConsulta extends CacheResultadosConsulta {
+public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 
-	public static class Info<TipoEtq extends Etiqueta>
-			extends CacheResultadosConsulta.Info<Tag, TipoEtq> {
+	protected static class InfoConsulta<TipoEtq extends Etiqueta> extends CacheEntidadesConsultas.InfoConsulta<Tag, TipoEtq> {
 
 		private String nomeRepositorio;
 
@@ -26,74 +24,82 @@ public class CacheEtiquetasConsulta extends CacheResultadosConsulta {
 			this.nomeRepositorio = nomeRepositorio;
 		}
 
-		public String getChave() {
-			return getNomeRepositorio() + "-" + getMoldeOT().getName();
+		public String getChaveCache() {
+			return getNomeRepositorio();
 		}
 
-		public CacheEtiquetas<TipoEtq> getInstancia(Contexto ctx) {
+		public CacheEtiquetas<TipoEtq> criarCache(ContextoEmMemoria contexto) {
 			return new CacheEtiquetas<TipoEtq>() {
 				{
-					setContexto(ctx);
+					setContexto(contexto);
+					setLogger(InfoConsulta.this.getLogger());
+					setChave(getChaveCache());
+					setEntidadeValidavel(InfoConsulta.this.isEntidadeValidavel());
 				}
 			};
 		}
 	}
 
-	public static CacheEtiquetasConsulta getCache(Usuario usu) throws ErroModelo {
-		return (CacheEtiquetasConsulta) getCache(usu, CacheEtiquetasConsulta.class);
+	public static CacheEtiquetasConsultas getCache(Usuario usu) throws ErroModelo {
+		return (CacheEtiquetasConsultas) getCache(usu, CacheEtiquetasConsultas.class);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public CacheOTEvn<?> get(Usuario usu, CacheResultadosConsulta.Info<?, ?> infoCache) throws ErroModelo {
-		Info<Etiqueta> infoCacheEtqs = (Info<Etiqueta>) infoCache;
+	public CacheEntidadesEvn<?> get(Usuario usu, CacheEntidadesConsultas.InfoConsulta<?, ?> infoConsulta) throws ErroModelo {
+		InfoConsulta<Etiqueta> infoConsultaEtqs = (InfoConsulta<Etiqueta>) infoConsulta;
 		try {
-			String chave = infoCacheEtqs.getChave();
-			CacheOTEvn<?> cache = get(chave);
-			if (cache == null || !cache.isAtualizado()) {
-				CacheEtiquetas<Etiqueta> cacheEtqs = infoCacheEtqs.getInstancia(getContexto());
+			String chave = infoConsultaEtqs.getChaveCache();
+			if (!containsKey(chave)) {
+				put(chave, infoConsultaEtqs.criarCache(getContexto()));
+			}
+			CacheEtiquetas<Etiqueta> cacheEtqs = (CacheEtiquetas<Etiqueta>) get(chave);
+			boolean emValidacao = cacheEtqs.isValidarEntidades();
+			if (!cacheEtqs.isAtualizado() || emValidacao) {
+				cacheEtqs.clear();
 				cacheEtqs.setAtualizado(true);
-				put(chave, cacheEtqs);
+				cacheEtqs.setValidarEntidades(false);
 				CacheTags cacheTag = CacheTags.getCache(usu);
-				List<String> lsIdsTags = cacheTag.consultarPorRepositorio(infoCacheEtqs.getNomeRepositorio());
-				if (isEmValidacao()) {
+				List<String> lsIdsTags = cacheTag.consultarPorRepositorio(infoConsultaEtqs.getNomeRepositorio());
+				if (emValidacao) {
 					for (String id : lsIdsTags) {
 						Tag tag = cacheTag.get(id);
-						Etiqueta etq = FabricaOT.getInstancia(infoCacheEtqs.getMoldeOT());
+						Etiqueta etq = FabricaEntidade.getInstancia(infoConsultaEtqs.getTipoEntidade());
 						etq.setMensagensValidacao(new ArrayList<String>());
 						try {
-							infoCacheEtqs.getIniciadorPropsOT().executar(usu, tag, etq);
-							infoCacheEtqs.getValidadorPropsOT().executar(usu, etq);
-						} catch (Throwable t) {
-							etq.getMensagensValidacao().add(t.toString());
+							infoConsultaEtqs.getIniciadorPropsEnt().executar(usu, tag, etq);
+							infoConsultaEtqs.getValidadorPropsEnt().executar(usu, etq);
+						} catch (Exception e) {
+							etq.getMensagensValidacao().add(e.toString());
 						}
 						cacheEtqs.put(id, etq);
-					}
-					for (Etiqueta etq : cacheEtqs.values()) {
-						try {
-							infoCacheEtqs.getIniciadorPropsRelOT().executar(usu, etq.getMetadado(), etq);
-						} catch (Throwable t) {
-							etq.getMensagensValidacao().add(t.toString());
-						}
 					}
 				} else {
 					for (String id : lsIdsTags) {
 						Tag tag = cacheTag.get(id);
-						Etiqueta etq = FabricaOT.getInstancia(infoCacheEtqs.getMoldeOT());
-						infoCacheEtqs.getIniciadorPropsOT().executar(usu, tag, etq);
+						Etiqueta etq = FabricaEntidade.getInstancia(infoConsultaEtqs.getTipoEntidade());
+						infoConsultaEtqs.getIniciadorPropsEnt().executar(usu, tag, etq);
 						cacheEtqs.put(id, etq);
 					}
+				}
+				if (emValidacao) {
 					for (Etiqueta etq : cacheEtqs.values()) {
-						infoCacheEtqs.getIniciadorPropsRelOT().executar(usu, etq.getMetadado(), etq);
+						try {
+							infoConsultaEtqs.getIniciadorPropsRelEnt().executar(usu, etq.getMetadado(), etq);
+						} catch (Exception e) {
+							etq.getMensagensValidacao().add(e.toString());
+						}
+					}
+				} else {
+					for (Etiqueta etq : cacheEtqs.values()) {
+						infoConsultaEtqs.getIniciadorPropsRelEnt().executar(usu, etq.getMetadado(), etq);
 					}
 				}
-				cache = cacheEtqs;
-				cache.getLogger().debug("atualizado - "+chave);
+				cacheEtqs.getLogger().debug("atualizado");
 			}
-			return cache;
+			return cacheEtqs;
 		} catch (ErroModelo e) {
-			throw new ErroModelo("Erro atualizando cache: " + infoCacheEtqs.getChave(), e);
+			throw new ErroModelo("Erro atualizando cache: " + infoConsultaEtqs.getChaveCache(), e);
 		}
 	}
-
 }

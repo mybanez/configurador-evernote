@@ -9,6 +9,7 @@ import com.evernote.edam.type.Tag;
 import meyn.cevn.modelo.CadastroEtiqueta;
 import meyn.cevn.modelo.ChavesModelo;
 import meyn.cevn.modelo.Nota;
+import meyn.cevn.modelo.Usuario;
 import meyn.cevn.modelo.acao.Acao;
 import meyn.cevn.modelo.acao.CadastroAcao;
 import meyn.cevn.modelo.projeto.CadastroProjeto;
@@ -16,7 +17,6 @@ import meyn.cevn.modelo.projeto.Projeto;
 import meyn.cevn.modelo.referencia.CadastroReferencia;
 import meyn.cevn.modelo.referencia.Referencia;
 import meyn.cevn.modelo.sumario.CadastroSumario;
-import meyn.cevn.modelo.usuario.Usuario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
@@ -24,13 +24,13 @@ import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 public class CadastroInteresse extends CadastroEtiqueta<Interesse> {
 	private static final String REPOSITORIO = "<1. Interesse>";
 
-	public CadastroInteresse() throws ErroCadastro {
+	public CadastroInteresse() throws ErroModelo {
 		super(REPOSITORIO);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	protected void iniciarPropriedadesRelacionamentoOT(Usuario usu, Tag mtd, Interesse intr) throws ErroModelo {
+	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, Tag mtd, Interesse intr) throws ErroCadastro {
 		Predicate<? extends Nota> ehDoInteresse = (nota) -> {
 			List<String> lsIds = nota.getMetadado().getTagGuids();
 			return lsIds != null && lsIds.contains(intr.getId());

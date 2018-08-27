@@ -12,10 +12,11 @@ import meyn.util.Cache;
 import meyn.util.modelo.ErroModelo;
 
 @SuppressWarnings("serial")
-public abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheOTEvn<TipoEtq> {
+abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheEntidadesEvn<TipoEtq> {
 
 	private class CachePorGrupo extends Cache<String, Grupo<TipoEtq>> {
 		CachePorGrupo() throws ErroModelo {
+			setLogger(CacheEtiquetas.this.getLogger());
 			Grupo<TipoEtq> grupo, subgrupo;
 			CacheTags cacheTag = CacheTags.getCache(getUsuario());
 			for (TipoEtq etq : CacheEtiquetas.this.values()) {
@@ -32,16 +33,16 @@ public abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheOTEv
 					}
 					if (subgrupo != null) {
 						grupo.getGruposFilho().add(subgrupo);
-						etq = subgrupo.getOT();
+						etq = subgrupo.getEntidade();
 						if (etq != null) {
-							grupo.getOtsFilho().remove(etq);
+							grupo.getEntidadesFilho().remove(etq);
 						}
 					} else {
 						String id = etq.getId();
 						if (containsKey(id)) {
-							get(id).setOT(etq);	
+							get(id).setEntidade(etq);	
 						} else {
-							grupo.getOtsFilho().add(etq);
+							grupo.getEntidadesFilho().add(etq);
 						}
 					}
 					subgrupo = grupo;
@@ -52,6 +53,7 @@ public abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheOTEv
 
 	private class CachePorRepositorio extends Cache<String, SortedSet<TipoEtq>> {
 		CachePorRepositorio() throws ErroModelo {
+			setLogger(CacheEtiquetas.this.getLogger());
 			CacheTags cacheTag = CacheTags.getCache(getUsuario());
 			for (TipoEtq etq : CacheEtiquetas.this.values()) {
 				Tag mtd = etq.getMetadado();
