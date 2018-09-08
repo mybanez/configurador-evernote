@@ -669,7 +669,6 @@ public class Console extends ManagedBeanEvn {
 		}
 	};
 
-	@ApplicationScoped
 	private class MapaOperacoesInd extends HashMap<String, InfoGeracaoSumario<? extends EntidadeEvn<?>>> {
 		{
 			OperacaoEntidade<Interesse> oprSumIntr;

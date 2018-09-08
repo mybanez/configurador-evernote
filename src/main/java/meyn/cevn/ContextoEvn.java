@@ -4,6 +4,7 @@ import java.util.Locale;
 
 import meyn.cevn.modelo.Usuario;
 import meyn.util.contexto.ContextoEmMemoria;
+import meyn.util.contexto.ErroContextoJaDefinido;
 
 @SuppressWarnings("serial")
 public class ContextoEvn extends ContextoEmMemoria {
@@ -26,7 +27,14 @@ public class ContextoEvn extends ContextoEmMemoria {
 	public static ContextoEvn getContextoLocal(Usuario usu) {
 		String chave = CONTEXTO_LOCAL + usu.getId();
 		if (!isDefinido(chave)) {
-			definir(chave, new ContextoEvn(usu));
+			try {
+				definir(chave, new ContextoEvn(usu));
+			} catch(ErroContextoJaDefinido e) {
+				/* Erro pode acontecer por concorrência. Estratégia é não 
+				 * sincronizar para ganhar performance, assumindo que este 
+				 * contexto seja definido uma única vez para o usuário. 
+				 */
+			}			
 		}
 		return (ContextoEvn) buscar(chave);
 	}
@@ -38,12 +46,19 @@ public class ContextoEvn extends ContextoEmMemoria {
 	public static ContextoEvn getContextoSessao(Usuario usu) {
 		String chave = CONTEXTO_SESSAO + usu.getId();
 		if (!isDefinido(chave)) {
-			ContextoEvn contexto = usu.getContexto();
-			if (contexto == null) {
-				contexto = new ContextoEvn(usu);
+			try {
+				ContextoEvn contexto = usu.getContexto();
+				if (contexto == null) {
+					contexto = new ContextoEvn(usu);
+				}
+				definir(chave, contexto);
 				usu.setContexto(contexto);
-			}
-			definir(chave, contexto);
+			} catch(ErroContextoJaDefinido e) {
+				/* Erro pode acontecer por concorrência. Estratégia é não 
+				 * sincronizar para ganhar performance, assumindo que este 
+				 * contexto seja definido uma única vez para o usuário. 
+				 */
+			}			
 		}
 		return (ContextoEvn) buscar(chave);
 	}

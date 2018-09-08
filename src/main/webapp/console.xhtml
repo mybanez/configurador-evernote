@@ -222,15 +222,15 @@
 					paginator="true" emptyMessage="Lista de sumários vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
 					rowsPerPageTemplate="10,15,25,50,100">
-					<p:column filterBy="#{sum.dataCriacao}" filterMatchMode="contains"
+					<p:column filterBy="#{sum.dataCriacaoFmt}" filterMatchMode="contains"
 						headerText="Criação" style="width: 16%;"
 						sortBy="#{sum.dataCriacao}">
-						<h:outputText value="#{sum.dataCriacao}" />
+						<h:outputText value="#{sum.dataCriacaoFmt}" />
 					</p:column>
-					<p:column filterBy="#{sum.dataAlteracao}"
+					<p:column filterBy="#{sum.dataAlteracaoFmt}"
 						filterMatchMode="contains" headerText="Alteração"
 						style="width: 16%;" sortBy="#{sum.dataAlteracao}">
-						<h:outputText value="#{sum.dataAlteracao}" />
+						<h:outputText value="#{sum.dataAlteracaoFmt}" />
 					</p:column>
 					<p:column filterBy="#{sum.nome}" filterMatchMode="contains"
 						headerText="Nome" style="width: 34%;" sortBy="#{sum.nome}">
@@ -367,10 +367,10 @@
 					paginator="true" emptyMessage="Lista de logs vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
 					rowsPerPageTemplate="10,15,25,50,100">
-					<p:column filterBy="#{log.dataAlteracao}"
+					<p:column filterBy="#{log.dataAlteracaoFmt}"
 						filterMatchMode="contains" headerText="Alteração"
 						style="width: 16%;" sortBy="#{log.dataAlteracao}">
-						<h:outputText value="#{log.dataAlteracao}" />
+						<h:outputText value="#{log.dataAlteracaoFmt}" />
 					</p:column>
 					<p:column headerText="Nome" style="width: 44%;"
 						sortBy="#{log.nome}">

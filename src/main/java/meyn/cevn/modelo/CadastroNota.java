@@ -105,8 +105,10 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	@Override
 	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, TipoNota nota) throws ErroModelo {
 		nota.setMetadado(mtd);
-		nota.setDataCriacao(FORMATO_DATA.format(new Date(mtd.getCreated())));
-		nota.setDataAlteracao(FORMATO_DATA.format(new Date(mtd.getUpdated())));
+		nota.setDataCriacao(mtd.getCreated());
+		nota.setDataAlteracao(mtd.getUpdated());
+		nota.setDataCriacaoFmt(FORMATO_DATA.format(new Date(mtd.getCreated())));
+		nota.setDataAlteracaoFmt(FORMATO_DATA.format(new Date(mtd.getUpdated())));
 		nota.setId(mtd.getGuid());
 		nota.setNome(mtd.getTitle());
 		NoteAttributes noteAtribs = mtd.getAttributes();

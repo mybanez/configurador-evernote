@@ -98,7 +98,7 @@ abstract class CacheNotas<TipoNota extends Nota> extends CacheEntidadesEvn<TipoN
 	public TipoNota put(String id, TipoNota nota) {
 		cacheGrupo.put(nota);
 		cacheRepo.put(nota);
-		getLogger().trace("carregado (cache notas): {} (atualizado: {})", nota.getNome(), nota.getDataAlteracao());
+		getLogger().trace("carregado (cache notas): {} (atualizado: {})", nota.getNome(), nota.getDataAlteracaoFmt());
 		return super.put(id, nota);
 	}
 
