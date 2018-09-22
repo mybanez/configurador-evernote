@@ -1,0 +1,135 @@
+@charset "ISO-8859-1";
+
+.ui-logo-texto-cevn, .ui-console-cab-col-cevn,
+	.ui-console-cab-texto-cevn, a.ui-link-cevn-1, a.ui-link-cevn-2 {
+	color: rgb(65, 173, 28);
+}
+
+.ui-cabecalho-cevn, .ui-paineis {
+	margin: auto;
+	width: 99%;
+}
+
+.ui-cabecalho-col1-cevn {
+	width: 20%;
+}
+
+.ui-cabecalho-col2-cevn {
+	width: 80%;
+}
+
+.ui-logo-cevn {
+	width: 100%;
+	text-align: center;
+}
+
+.ui-logo-texto-cevn {
+	font-family: Cursive;
+	font-size: 13pt;
+	font-weight: bold;
+}
+
+.ui-logo-img-cevn {
+	width: 250px;
+}
+
+.ui-console-cevn {
+	width: 100%;
+	border: 1px solid black;
+}
+
+.ui-console-col-cevn {
+	width: 25%;
+	border-bottom: 1px solid #ddd;
+	border-right: 1px solid #ddd;
+}
+
+.ui-console-cab-cevn {
+	width: 100%;
+	border-bottom: 1px solid #ddd;
+	text-align: center;
+}
+
+.ui-console-cab-col-cevn, .ui-console-cab-texto-cevn {
+	font-family: Arial;
+	font-size: 11pt;
+	font-weight: bold;
+	text-align: center;
+}
+
+.ui-console-cab-col-cevn {
+	width: 33%;
+}
+
+.ui-console-texto-cevn {
+	font-family: Arial;
+	font-size: 10pt;
+}
+
+.ui-console-rod-cevn {
+	width: 100%;
+	padding: 10px;
+	text-align: center;
+}
+
+.ui-saida-tempo-cevn {
+	width: 40%;
+	font-family: Arial;
+	font-size: 10pt;
+}
+
+.ui-saida-limpar-cevn {
+	width: 20%;
+	text-align: center;
+}
+
+.ui-saida-log-cevn {
+	width: 40%;
+	text-align: right;
+	font-size: 10pt;
+}
+
+.ui-saida-cevn {
+	height: 300px;
+	overflow-y: auto;
+	border: 1px solid #ddd;
+	padding: 5px;
+	font-family: Courier New;
+	font-size: 11pt;
+}
+
+.ui-painel-cab-cevn {
+	padding: 5px;
+	text-align: center;
+}
+
+.ui-painel-overlay {
+	position: fixed;
+	display: none;
+	top: 2.2%;
+	left: 95.5%;
+	background-color: rgba(255, 255, 255, 1);
+	border: 1px solid #ddd;
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0
+		rgba(0, 0, 0, 0.19);
+	z-index: 10;
+}
+
+.ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover,
+	.ui-state-focus, .ui-widget-content .ui-state-focus, .ui-widget-header .ui-state-focus
+	{
+	border: 1px solid #377b5d;
+	background: linear-gradient(#ffffff, #85c8aa);
+	box-shadow: 0px 0px 8px #85c8aa;
+}
+
+.ui-state-active, .ui-widget-content .ui-state-active, .ui-widget-header .ui-state-active
+	{
+	border: 1px solid #377b5d;
+	background: #85c8aa;
+	box-shadow: 0px 0px 8px #85c8aa;
+}
+
+:focus {
+	outline: 1px auto #377b5d;
+}

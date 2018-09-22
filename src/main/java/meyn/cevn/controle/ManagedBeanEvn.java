@@ -23,7 +23,7 @@ import meyn.util.modelo.entidade.FabricaEntidade;
 public abstract class ManagedBeanEvn implements Serializable {
 
 	private static final String AUTH_TOKEN_SAND_BOX = "S=s1:U=93be0:E=1683a17eb9d:C=160e266bcc0:P=1cd:A=en-devtoken:V=2:H=a12125d6ec082e623c91bcc59f25de88";
-	private static final String AUTH_TOKEN_PROD = "";
+	private static final String AUTH_TOKEN_PROD = "S=s202:U=187f3ba:E=168dde82bfd:C=1618636fc70:P=1cd:A=en-devtoken:V=2:H=cb717752d1b131b749b1d63ef31e8109";
 
 	private final Logger logger = LogManager.getLogger(getClass());
 

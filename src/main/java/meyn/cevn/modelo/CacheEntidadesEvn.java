@@ -102,7 +102,7 @@ abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEv
 
 	protected TipoEnt consultarPorNome(String nome) throws ErroModelo {
 		if (size() > cacheNome.size()) {
-			throw new ErroModelo("Nome não é chave primária no cache: " + getClass());
+			throw new ErroModelo("Nome não é chave primária no cache: " + getChave());
 		}
 		TipoEnt ent = cacheNome.get(nome);
 		if (ent == null) {

@@ -12,12 +12,12 @@ import meyn.util.modelo.ErroModelo;
 abstract class CacheEntidadesConsultas extends CacheEvn<String, CacheEntidadesEvn<?>> {
 
 	@FunctionalInterface
-	protected static interface IniciadorPropriedadesEnt<TipoMtd extends TBase<?>, TipoEnt extends EntidadeEvn<?>> {
+	protected static interface IniciadorEntidade<TipoMtd extends TBase<?>, TipoEnt extends EntidadeEvn<?>> {
 		void executar(Usuario usu, TipoMtd mtd, TipoEnt ent) throws ErroModelo;
 	}
 
 	@FunctionalInterface
-	protected static interface ValidadorPropriedadesEnt<TipoEnt extends EntidadeEvn<?>> {
+	protected static interface ValidadorEntidade<TipoEnt extends EntidadeEvn<?>> {
 		void executar(Usuario usu, TipoEnt ent) throws ErroModelo;
 	}
 
@@ -25,9 +25,9 @@ abstract class CacheEntidadesConsultas extends CacheEvn<String, CacheEntidadesEv
 
 		private Class<?> tipoEntidade;
 		private boolean entidadeValidavel;
-		private IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsEnt;
-		private IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsRelEnt;
-		private ValidadorPropriedadesEnt<TipoEnt> validadorPropsEnt;
+		private IniciadorEntidade<TipoMtd, TipoEnt> iniciadorPropsEnt;
+		private IniciadorEntidade<TipoMtd, TipoEnt> iniciadorPropsRelEnt;
+		private ValidadorEntidade<TipoEnt> validadorPropsEnt;
 		private Logger logger;
 
 		Class<?> getTipoEntidade() {
@@ -46,27 +46,27 @@ abstract class CacheEntidadesConsultas extends CacheEvn<String, CacheEntidadesEv
 			this.entidadeValidavel = entidadeValidavel;
 		}
 
-		IniciadorPropriedadesEnt<TipoMtd, TipoEnt> getIniciadorPropsEnt() {
+		IniciadorEntidade<TipoMtd, TipoEnt> getIniciadorPropsEnt() {
 			return iniciadorPropsEnt;
 		}
 
-		void setIniciadorPropsEnt(IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsEnt) {
+		void setIniciadorPropsEnt(IniciadorEntidade<TipoMtd, TipoEnt> iniciadorPropsEnt) {
 			this.iniciadorPropsEnt = iniciadorPropsEnt;
 		}
 
-		IniciadorPropriedadesEnt<TipoMtd, TipoEnt> getIniciadorPropsRelEnt() {
+		IniciadorEntidade<TipoMtd, TipoEnt> getIniciadorPropsRelEnt() {
 			return iniciadorPropsRelEnt;
 		}
 
-		void setIniciadorPropsRelEnt(IniciadorPropriedadesEnt<TipoMtd, TipoEnt> iniciadorPropsRelEnt) {
+		void setIniciadorPropsRelEnt(IniciadorEntidade<TipoMtd, TipoEnt> iniciadorPropsRelEnt) {
 			this.iniciadorPropsRelEnt = iniciadorPropsRelEnt;
 		}
 
-		ValidadorPropriedadesEnt<TipoEnt> getValidadorPropsEnt() {
+		ValidadorEntidade<TipoEnt> getValidadorPropsEnt() {
 			return validadorPropsEnt;
 		}
 
-		void setValidadorPropsEnt(ValidadorPropriedadesEnt<TipoEnt> validadorPropsEnt) {
+		void setValidadorPropsEnt(ValidadorEntidade<TipoEnt> validadorPropsEnt) {
 			this.validadorPropsEnt = validadorPropsEnt;
 		}
 

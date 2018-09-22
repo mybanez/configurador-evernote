@@ -8,7 +8,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import javax.faces.bean.ApplicationScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 
@@ -40,11 +39,12 @@ import meyn.util.modelo.entidade.FabricaEntidade;
 @RequestScoped
 public class Console extends ManagedBeanEvn {
 
-	Fachada fc;
+	private Sessao sessao;
+	private Fachada fachada;
 
 	public Console() throws ErroModelo {
-		fc = FabricaFachada.getFachada();
 		sessao = Sessao.getSessao(getUsuario());
+		fachada = FabricaFachada.getFachada();
 		iniciarEntidades();
 	}
 
@@ -63,7 +63,7 @@ public class Console extends ManagedBeanEvn {
 			return (Sessao) contexto.get(chave);
 		}
 
-		Fachada fc;
+		boolean nova = true;
 		
 		Usuario usuario;
 		int contadorProcessos = 0;
@@ -77,10 +77,15 @@ public class Console extends ManagedBeanEvn {
 
 		Sessao(Usuario usuario) throws ErroModelo {
 			this.usuario = usuario;
-			ClienteEvn.invalidarCaches(usuario);
-			fc = FabricaFachada.getFachada();
-			fc.excluirSumariosInvalidos(usuario);
 			logger.debug("sessão console criada");
+		}
+
+		public boolean isNova() {
+			if (nova) {
+				nova = false;
+				return true;
+			}
+			return false;
 		}
 
 		Integer getContadorProcessos() {
@@ -140,8 +145,6 @@ public class Console extends ManagedBeanEvn {
 			logger.trace("saída limpa");
 		}
 	}
-
-	private Sessao sessao;
 
 	public int getContadorProcessos() {
 		return sessao.getContadorProcessos();
@@ -622,12 +625,12 @@ public class Console extends ManagedBeanEvn {
 			super(false);
 			info = new InfoOperacaoLote("Excluindo ", "Sumários", " excluídos com sucesso!",
 					" não foram excluídos com sucesso!", (Usuario usu) -> {
-						fc.excluirTodos(usu, ChavesModelo.SUMARIO);
-						fc.invalidarCaches(usu, ChavesModelo.SUMARIO);
-						fc.invalidarCaches(usu, ChavesModelo.INTERESSE);
-						fc.invalidarCaches(usu, ChavesModelo.PROJETO);
-						fc.consultarTodos(usu, ChavesModelo.INTERESSE);
-						fc.consultarTodos(usu, ChavesModelo.PROJETO);
+						fachada.excluirTodos(usu, ChavesModelo.SUMARIO);
+						fachada.invalidarCaches(usu, ChavesModelo.SUMARIO);
+						fachada.invalidarCaches(usu, ChavesModelo.INTERESSE);
+						fachada.invalidarCaches(usu, ChavesModelo.PROJETO);
+						fachada.consultarTodos(usu, ChavesModelo.INTERESSE);
+						fachada.consultarTodos(usu, ChavesModelo.PROJETO);
 					});
 		}
 	}
@@ -637,34 +640,34 @@ public class Console extends ManagedBeanEvn {
 		ProcessoExclusaoLogs() throws ErroModelo {
 			super(false);
 			info = new InfoOperacaoLote("Excluindo ", "Logs", " excluídos com sucesso!",
-					" não foram excluídos com sucesso!", (Usuario usu) -> fc.excluirLogsAntigos(usu));
+					" não foram excluídos com sucesso!", (Usuario usu) -> fachada.excluirLogsAntigos(usu));
 		}
 	}
 
 	private class MapaOperacoes extends HashMap<String, InfoGeracaoSumarios> {
 		{
 			Operacao operSums;
-			operSums = (Usuario usu) -> fc.gerarSumarioInteresses(usu);
+			operSums = (Usuario usu) -> fachada.gerarSumarioInteresses(usu);
 			put(OP_INTERESSES, new InfoGeracaoSumarios("interesses", true, true, operSums));
-			operSums = (Usuario usu) -> fc.gerarSumarioProjetos(usu);
+			operSums = (Usuario usu) -> fachada.gerarSumarioProjetos(usu);
 			put(OP_PROJETOS, new InfoGeracaoSumarios("projetos", true, true, operSums));
-			operSums = (Usuario usu) -> fc.gerarValidacaoProjetos(usu);
+			operSums = (Usuario usu) -> fachada.gerarValidacaoProjetos(usu);
 			put(OP_VAL_PROJETOS, new InfoGeracaoSumarios("projetos", true, false, operSums));
-			operSums = (Usuario usu) -> fc.gerarValidacaoProjetosParcial(usu);
+			operSums = (Usuario usu) -> fachada.gerarValidacaoProjetosParcial(usu);
 			put(OP_VAL_PROJETOS_PAR, new InfoGeracaoSumarios("projetos", true, false, operSums));
-			operSums = (Usuario usu) -> fc.gerarSumarioAcoes(usu);
+			operSums = (Usuario usu) -> fachada.gerarSumarioAcoes(usu);
 			put(OP_ACOES, new InfoGeracaoSumarios("ações", false, true, operSums));
-			operSums = (Usuario usu) -> fc.gerarSumarioAcoesCalendario(usu);
+			operSums = (Usuario usu) -> fachada.gerarSumarioAcoesCalendario(usu);
 			put(OP_ACOES_CALEND, new InfoGeracaoSumarios("ações", false, true, operSums));
-			operSums = (Usuario usu) -> fc.gerarValidacaoAcoes(usu);
+			operSums = (Usuario usu) -> fachada.gerarValidacaoAcoes(usu);
 			put(OP_VAL_ACOES, new InfoGeracaoSumarios("ações", false, false, operSums));
-			operSums = (Usuario usu) -> fc.gerarValidacaoAcoesParcial(usu);
+			operSums = (Usuario usu) -> fachada.gerarValidacaoAcoesParcial(usu);
 			put(OP_VAL_ACOES_PAR, new InfoGeracaoSumarios("ações", false, false, operSums));
-			operSums = (Usuario usu) -> fc.gerarSumarioReferencias(usu);
+			operSums = (Usuario usu) -> fachada.gerarSumarioReferencias(usu);
 			put(OP_REFERENCIAS, new InfoGeracaoSumarios("referências", false, true, operSums));
-			operSums = (Usuario usu) -> fc.gerarValidacaoReferencias(usu);
+			operSums = (Usuario usu) -> fachada.gerarValidacaoReferencias(usu);
 			put(OP_VAL_REFERENCIAS, new InfoGeracaoSumarios("referências", false, false, operSums));
-			operSums = (Usuario usu) -> fc.gerarValidacaoReferenciasParcial(usu);
+			operSums = (Usuario usu) -> fachada.gerarValidacaoReferenciasParcial(usu);
 			put(OP_VAL_REFERENCIAS_PAR, new InfoGeracaoSumarios("referências", false, false, operSums));
 		}
 	};
@@ -673,13 +676,13 @@ public class Console extends ManagedBeanEvn {
 		{
 			OperacaoEntidade<Interesse> oprSumIntr;
 			OperacaoEntidade<Projeto> oprSumPrj;
-			oprSumIntr = (Usuario usu, Interesse intr) -> fc.gerarSumarioInteresse(usu, intr.getId());
+			oprSumIntr = (Usuario usu, Interesse intr) -> fachada.gerarSumarioInteresse(usu, intr.getId());
 			put(OP_INTERESSE, new InfoGeracaoSumario<Interesse>("interesse", true, true, oprSumIntr));
-			oprSumPrj = (Usuario usu, Projeto prj) -> fc.gerarSumarioProjeto(usu, prj.getId());
+			oprSumPrj = (Usuario usu, Projeto prj) -> fachada.gerarSumarioProjeto(usu, prj.getId());
 			put(OP_PROJETO, new InfoGeracaoSumario<Projeto>("projeto", true, true, oprSumPrj));
-			oprSumPrj = (Usuario usu, Projeto prj) -> fc.gerarValidacaoProjeto(usu, prj.getId());
+			oprSumPrj = (Usuario usu, Projeto prj) -> fachada.gerarValidacaoProjeto(usu, prj.getId());
 			put(OP_VAL_PROJETO, new InfoGeracaoSumario<Projeto>("projeto", true, false, oprSumPrj));
-			oprSumPrj = (Usuario usu, Projeto prj) -> fc.gerarValidacaoProjetoParcial(usu, prj.getId());
+			oprSumPrj = (Usuario usu, Projeto prj) -> fachada.gerarValidacaoProjetoParcial(usu, prj.getId());
 			put(OP_VAL_PROJETO_PAR, new InfoGeracaoSumario<Projeto>("projeto", true, false, oprSumPrj));
 		}
 		
@@ -711,24 +714,24 @@ public class Console extends ManagedBeanEvn {
 		if (sessao.contadorProcessos == 0) {
 			ClienteEvn.invalidarCaches(usu);
 		}
-		clSums = fc.consultarTodos(usu, ChavesModelo.SUMARIO);
-		clIntrs = fc.consultarTodos(usu, ChavesModelo.INTERESSE);
-		clProjs = fc.consultarTodos(usu, ChavesModelo.PROJETO);
-		clAcoes = fc.consultarTodos(usu, ChavesModelo.ACAO);
-		clRefs = fc.consultarTodos(usu, ChavesModelo.REFERENCIA);
-		clLogs = fc.consultarTodos(usu, ChavesModelo.LOG);
-		verificarConsistenciaSumarios();
+		clSums = fachada.consultarTodos(usu, ChavesModelo.SUMARIO);
+		clIntrs = fachada.consultarTodos(usu, ChavesModelo.INTERESSE);
+		clProjs = fachada.consultarTodos(usu, ChavesModelo.PROJETO);
+		clAcoes = fachada.consultarTodos(usu, ChavesModelo.ACAO);
+		clRefs = fachada.consultarTodos(usu, ChavesModelo.REFERENCIA);
+		clLogs = fachada.consultarTodos(usu, ChavesModelo.LOG);
+		verificarConsistenciaSumarios(usu);
 		getLogger().debug("entidades iniciadas");
 	}
 
 	public void validarEntidades() throws ErroModelo {
 		if (!entidadesValidadas) {
 			Usuario usu = sessao.usuario;
-			fc.validarEntidades(usu);
-			fc.consultarTodos(usu, ChavesModelo.INTERESSE);
-			fc.consultarTodos(usu, ChavesModelo.PROJETO);
-			fc.consultarTodos(usu, ChavesModelo.ACAO);
-			fc.consultarTodos(usu, ChavesModelo.REFERENCIA);
+			fachada.validarEntidades(usu);
+			fachada.consultarTodos(usu, ChavesModelo.INTERESSE);
+			fachada.consultarTodos(usu, ChavesModelo.PROJETO);
+			fachada.consultarTodos(usu, ChavesModelo.ACAO);
+			fachada.consultarTodos(usu, ChavesModelo.REFERENCIA);
 			entidadesValidadas = true;
 			getLogger().debug("entidades validadas");
 		}
@@ -737,18 +740,22 @@ public class Console extends ManagedBeanEvn {
 	public void recarregarEntidade() throws ErroModelo {
 		Usuario usu = sessao.usuario;
 		String modelo = ChavesModelo.NOME_PACOTE + getParametroRequisicao("modelo").toUpperCase();
-		fc.invalidarCaches(usu, modelo);
-		fc.consultarTodos(usu, modelo);
+		fachada.invalidarCaches(usu, modelo);
+		fachada.consultarTodos(usu, modelo);
 		getLogger().debug("entidades recarregadas: {}", modelo);
 	}
 
-	void verificarConsistenciaSumarios() {
+	void verificarConsistenciaSumarios(Usuario usu) throws ErroModelo {
+		// Exclui sumários individuais para entidades que não existem mais
+		if (sessao.isNova()) {
+			fachada.excluirSumariosInvalidos(usu);
+		}
+		// Verifica se todos os sumários individuais foram criados
 		Collection<Sumario> clSumsInd = new ArrayList<Sumario>(clSums);
 		clSumsInd.removeIf((sum) -> {
 			String nome = sum.getNome();
 			return !nome.startsWith("Sumário ") && !nome.startsWith("Validação ");
 		});
-		// Nem todos os sumários individuais foram criados
 		if (clSumsInd.size() < clProjs.size() * 2 + clIntrs.size()) {
 			getLogger().error("Quantidade de sumários individuais inconsistente: {} (intrs={}, projs={})",
 					clSumsInd.size(), clIntrs.size(), clProjs.size());
@@ -772,7 +779,7 @@ public class Console extends ManagedBeanEvn {
 						put("id", id);
 					}
 				}, EntidadeEvn.class);
-				ent = fc.consultarPorChavePrimaria(sessao.usuario, modelo, ent);
+				ent = fachada.consultarPorChavePrimaria(sessao.usuario, modelo, ent);
 				new ProcessoGeracaoSumario<EntidadeEvn<?>>(info, Arrays.asList(ent)).iniciar(false);
 			}
 		} catch (ErroModelo e) {
