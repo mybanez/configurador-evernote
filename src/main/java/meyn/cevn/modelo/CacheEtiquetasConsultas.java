@@ -60,10 +60,9 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 				cacheEtqs.setAtualizado(true);
 				cacheEtqs.setValidarEntidades(false);
 				CacheTags cacheTag = CacheTags.getCache(usu);
-				List<String> lsIdsTags = cacheTag.consultarPorRepositorio(infoConsultaEtqs.getNomeRepositorio());
+				List<Tag> lsTags = cacheTag.consultarPorRepositorio(infoConsultaEtqs.getNomeRepositorio());
 				if (emValidacao) {
-					for (String id : lsIdsTags) {
-						Tag tag = cacheTag.get(id);
+					for (Tag tag : lsTags) {
 						Etiqueta etq = FabricaEntidade.getInstancia(infoConsultaEtqs.getTipoEntidade());
 						etq.setMensagensValidacao(new ArrayList<String>());
 						try {
@@ -72,14 +71,13 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 						} catch (Exception e) {
 							etq.getMensagensValidacao().add(e.toString());
 						}
-						cacheEtqs.put(id, etq);
+						cacheEtqs.put(tag.getGuid(), etq);
 					}
 				} else {
-					for (String id : lsIdsTags) {
-						Tag tag = cacheTag.get(id);
+					for (Tag tag : lsTags) {
 						Etiqueta etq = FabricaEntidade.getInstancia(infoConsultaEtqs.getTipoEntidade());
 						infoConsultaEtqs.getIniciadorPropsEnt().executar(usu, tag, etq);
-						cacheEtqs.put(id, etq);
+						cacheEtqs.put(tag.getGuid(), etq);
 					}
 				}
 				if (emValidacao) {
@@ -99,7 +97,7 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 			}
 			return cacheEtqs;
 		} catch (ErroModelo e) {
-			throw new ErroModelo("Erro atualizando cache: " + infoConsultaEtqs.getChaveCache(), e);
+			throw new ErroModelo("Erro carregando cache de consultas: " + infoConsultaEtqs.getChaveCache(), e);
 		}
 	}
 }

@@ -23,9 +23,11 @@ import meyn.cevn.modelo.referencia.CadastroReferencia;
 import meyn.cevn.modelo.referencia.Referencia;
 import meyn.cevn.modelo.sumario.CadastroSumario;
 import meyn.util.modelo.ErroModelo;
+import meyn.util.modelo.Modelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
+@Modelo(ChavesModelo.PROJETO)
 public class CadastroProjeto extends CadastroNota<Projeto> {
 
 	private static final String REPOSITORIO = "2. Projetos";
@@ -49,7 +51,8 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 		String idEtq = proj.getEtiqueta().getId();
 
 		CacheTags cacheTag = CacheTags.getCache(usu);
-		List<String> lsIdsTag = new ArrayList<String>(proj.getMetadado().getTagGuids());
+		List<String> lsIdsTag = proj.getMetadado().getTagGuids();
+		lsIdsTag = lsIdsTag == null ? Collections.emptyList() : new ArrayList<String>(lsIdsTag);
 		lsIdsTag.remove(idEtq);
 
 		Predicate<? extends Nota> ehDoProjeto = (nota) -> {
@@ -82,12 +85,12 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 		try {
 			proj.setSumarioValidacao(cadSum.consultarValidacaoPorProjeto(usu, proj));
 		} catch (ErroItemNaoEncontrado e) {
-			proj.setSumarioValidacao(cadSum.gerarValidacaoProjeto(usu, proj));
+			getLogger().warn("Validação não encontrada: {}", proj.getNome());
 		}
 		try {
 			proj.setSumario(cadSum.consultarPorProjeto(usu, proj));
 		} catch (ErroItemNaoEncontrado e) {
-			proj.setSumario(cadSum.gerarSumarioInicialProjeto(usu, proj));
+			getLogger().warn("Sumário não encontrado: {}", proj.getNome());
 		}
 	}
 
@@ -97,7 +100,7 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 		Collection<String> clMsgs = proj.getMensagensValidacao();
 		// Etiqueta
 		List<String> lsIdsTag = proj.getMetadado().getTagGuids();
-		if (!lsIdsTag.contains(proj.getEtiqueta().getId())) {
+		if (lsIdsTag == null || !lsIdsTag.contains(proj.getEtiqueta().getId())) {
 			clMsgs.add("Etiqueta não encontrada: " + proj.getNome());
 		}
 		// Lembrete

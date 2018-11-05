@@ -94,7 +94,7 @@ abstract class CacheEntidadesConsultas extends CacheEvn<String, CacheEntidadesEv
 	protected void invalidarCaches(Collection<String> clChavesCaches) throws ErroModelo {
 		for (String chave : clChavesCaches) {
 			if (containsKey(chave)) {
-				get(chave).setAtualizado(false);
+				get(chave).invalidar();
 			}
 		}
 	}

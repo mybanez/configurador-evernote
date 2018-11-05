@@ -22,7 +22,9 @@ import meyn.cevn.modelo.projeto.CadastroProjeto;
 import meyn.cevn.modelo.projeto.Projeto;
 import meyn.cevn.util.FusoHorario;
 import meyn.util.modelo.ErroModelo;
+import meyn.util.modelo.Modelo;
 
+@Modelo(ChavesModelo.ACAO)
 public class CadastroAcao extends CadastroNota<Acao> {
 
 	private static final String REPOSITORIO = "3. Ações";

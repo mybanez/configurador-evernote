@@ -13,8 +13,9 @@ import org.apache.logging.log4j.ThreadContext;
 
 import com.evernote.auth.EvernoteService;
 
-import meyn.cevn.ClienteEvn;
 import meyn.cevn.ContextoEvn;
+import meyn.cevn.modelo.ClienteEvn;
+import meyn.cevn.modelo.FabricaFachada;
 import meyn.cevn.modelo.Usuario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.entidade.FabricaEntidade;
@@ -25,11 +26,7 @@ public abstract class ManagedBeanEvn implements Serializable {
 	private static final String AUTH_TOKEN_SAND_BOX = "S=s1:U=93be0:E=1683a17eb9d:C=160e266bcc0:P=1cd:A=en-devtoken:V=2:H=a12125d6ec082e623c91bcc59f25de88";
 	private static final String AUTH_TOKEN_PROD = "S=s202:U=187f3ba:E=168dde82bfd:C=1618636fc70:P=1cd:A=en-devtoken:V=2:H=cb717752d1b131b749b1d63ef31e8109";
 
-	private final Logger logger = LogManager.getLogger(getClass());
-
-	protected Logger getLogger() {
-		return logger;
-	}
+	protected final Logger logger = LogManager.getLogger(getClass());
 
 	protected String getParametroRequisicao(String nome) {
 		Map<String, String> params = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
@@ -53,13 +50,15 @@ public abstract class ManagedBeanEvn implements Serializable {
 		ThreadContext.put("usuario", usu.getId());
 		//Força iniciação do contexto
 		ContextoEvn.getContexto(usu);
-		getLogger().debug("usuario recuperado");
-		if (!ClienteEvn.isIniciado(usu)) {
+		logger.debug("usuario recuperado");
+		if (!ClienteEvn.isConectado(usu)) {
 			ClienteEvn.setURL(contexto.getRequestScheme() + "://" + contexto.getRequestServerName() + ":"
 					+ contexto.getRequestServerPort() + contexto.getRequestContextPath());
 			ClienteEvn.conectar(usu);
+			//Só para novas sessões, para não gerar duplicações
+			usu.setLog(FabricaFachada.getFachada().gerarLogUsuario(usu));
 		}
-		getLogger().debug("cliente conectado");
+		logger.debug("cliente conectado");
 		return usu;
 	}
 }

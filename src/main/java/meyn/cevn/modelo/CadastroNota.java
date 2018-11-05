@@ -4,10 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
-import com.evernote.clients.NoteStoreClient;
-import com.evernote.edam.error.EDAMNotFoundException;
-import com.evernote.edam.error.EDAMSystemException;
-import com.evernote.edam.error.EDAMUserException;
 import com.evernote.edam.notestore.NoteFilter;
 import com.evernote.edam.notestore.NoteMetadata;
 import com.evernote.edam.notestore.NotesMetadataResultSpec;
@@ -15,12 +11,12 @@ import com.evernote.edam.type.Note;
 import com.evernote.edam.type.NoteAttributes;
 import com.evernote.edam.type.NoteSortOrder;
 import com.evernote.edam.type.Notebook;
-import com.evernote.thrift.TException;
 
-import meyn.cevn.ClienteEvn;
 import meyn.cevn.util.FusoHorario;
 import meyn.util.modelo.ErroModelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
+import meyn.util.modelo.entidade.Entidade;
+import meyn.util.modelo.entidade.FabricaEntidade;
 
 public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<NoteMetadata, TipoNota> {
 
@@ -98,23 +94,32 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override CacheEntidadesEvn<TipoNota> getCache(Usuario usu) throws ErroModelo {
+	@Override 
+	protected CacheEntidadesEvn<TipoNota> getCache(Usuario usu) throws ErroModelo {
 		return (CacheEntidadesEvn<TipoNota>) CacheNotasConsultas.getCache(usu).get(usu, consultaPadrao);
 	}
 
+	private void iniciarPropriedadesEnt(Usuario usu, Entidade mtd, TipoNota nota) throws ErroModelo {
+		nota.setDataCriacao((long) mtd.get("created"));
+		nota.setDataAlteracao((long) mtd.get("updated"));
+		nota.setDataCriacaoFmt(FORMATO_DATA.format(new Date(nota.getDataCriacao())));
+		nota.setDataAlteracaoFmt(FORMATO_DATA.format(new Date(nota.getDataAlteracao())));
+		nota.setId((String) mtd.get("guid"));
+		nota.setNome((String) mtd.get("title"));
+		NoteAttributes noteAtribs = (NoteAttributes) mtd.get("attributes");
+		nota.setLembrete(noteAtribs.isSetReminderOrder());
+		nota.setDataLembrete(noteAtribs.isSetReminderTime() ? new Date(noteAtribs.getReminderTime()) : null);
+		nota.setURL(usu.getPrefixoURL() + nota.getId() + "/" + nota.getId());
+	}
+	
 	@Override
 	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, TipoNota nota) throws ErroModelo {
 		nota.setMetadado(mtd);
-		nota.setDataCriacao(mtd.getCreated());
-		nota.setDataAlteracao(mtd.getUpdated());
-		nota.setDataCriacaoFmt(FORMATO_DATA.format(new Date(mtd.getCreated())));
-		nota.setDataAlteracaoFmt(FORMATO_DATA.format(new Date(mtd.getUpdated())));
-		nota.setId(mtd.getGuid());
-		nota.setNome(mtd.getTitle());
-		NoteAttributes noteAtribs = mtd.getAttributes();
-		nota.setLembrete(noteAtribs.isSetReminderOrder());
-		nota.setDataLembrete(noteAtribs.isSetReminderTime() ? new Date(noteAtribs.getReminderTime()) : null);
-		nota.setURL(usu.getPrefixoURL() + mtd.getGuid() + "/" + mtd.getGuid());
+		iniciarPropriedadesEnt(usu, FabricaEntidade.getInstancia(mtd), nota);
+	}
+
+	protected void iniciarPropriedadesEnt(Usuario usu, Note mtd, TipoNota nota) throws ErroModelo {
+		iniciarPropriedadesEnt(usu, FabricaEntidade.getInstancia(mtd), nota);
 	}
 
 	@Override
@@ -126,7 +131,7 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 		}
 	}
 
-	protected void iniciarPropriedadesMetadado(Usuario usu, Note mtd, TipoNota nota) {
+	protected void iniciarPropriedadesMetadado(Note mtd, TipoNota nota) {
 		mtd.setTitle(nota.getNome());
 		NoteAttributes atribs = new NoteAttributes();
 		long agora = System.currentTimeMillis();
@@ -144,13 +149,8 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 
 	public void carregarConteudo(Usuario usu, TipoNota nota) throws ErroCadastro {
 		try {
-			NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
-			Note mtd;
-			synchronized (noteStore) {
-				mtd = noteStore.getNote(nota.getId(), true, false, false, false);
-			}
-			nota.setConteudo(mtd.getContent());
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
+			nota.setConteudo(ClienteEvn.consultarNota(usu, nota.getId(), true).getContent());
+		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro carregando conteúdo da nota: " + nota.getNome(), e);
 		}
 	}
@@ -158,18 +158,14 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	@Override
 	public TipoNota incluir(Usuario usu, TipoNota nota) throws ErroCadastro {
 		try {
-			NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
 			Note mtd = new Note();
-			iniciarPropriedadesMetadado(usu, mtd, nota);
 			mtd.setNotebookGuid(getMetadadoRepositorio(usu).getGuid());
-			synchronized (noteStore) {
-				mtd = noteStore.createNote(mtd);
-			}
-			nota.setId(mtd.getGuid());
-			nota.setURL(usu.getPrefixoURL() + mtd.getGuid() + "/" + mtd.getGuid());
+			iniciarPropriedadesMetadado(mtd, nota);
+			mtd = ClienteEvn.incluirNota(usu, mtd);
+			iniciarPropriedadesEnt(usu, mtd, nota);
 			getLogger().info("incluído: {}", nota.getNome());
 			return nota;
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException | ErroModelo e) {
+		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro incluindo nota: " + nota.getNome(), e);
 		}
 	}
@@ -177,43 +173,22 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	@Override
 	public TipoNota alterar(Usuario usu, TipoNota nota) throws ErroCadastro {
 		try {
-			NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
-			synchronized (noteStore) {
-				Note mtd = noteStore.getNote(nota.getId(), false, false, false, false);
-				iniciarPropriedadesMetadado(usu, mtd, nota);
-				noteStore.updateNote(mtd);
-			}
+			Note mtd = ClienteEvn.consultarNota(usu, nota.getId(), false);
+			iniciarPropriedadesMetadado(mtd, nota);
+			ClienteEvn.atualizarNota(usu, mtd);
 			getLogger().info("alterado: {}", nota.getNome());
 			return nota;
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
+		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro atualizando nota: " + nota.getNome(), e);
-		}
-	}
-
-	@Override
-	public void excluirTodos(Usuario usu) throws ErroCadastro {
-		try {
-			NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
-			for (Nota nota : consultarTodos(usu)) {
-				synchronized (noteStore) {
-					noteStore.deleteNote(nota.getId());
-				}
-			}
-			getLogger().info("notas excluídas");
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException | ErroModelo e) {
-			throw new ErroCadastro("Erro excluindo notas", e);
 		}
 	}
 
 	@Override
 	public void excluir(Usuario usu, TipoNota nota) throws ErroCadastro {
 		try {
-			NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
-			synchronized (noteStore) {
-				noteStore.deleteNote(nota.getId());
-			}
+			ClienteEvn.excluirNota(usu, nota.getId());
 			getLogger().info("excluído: {}", nota.getNome());
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
+		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro excluindo nota: " + nota.getNome(), e);
 		}
 	}

@@ -39,10 +39,12 @@ public abstract class CadastroEtiqueta<TipoEtq extends Etiqueta> extends Cadastr
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override CacheEntidadesEvn<TipoEtq> getCache(Usuario usu) throws ErroModelo {
+	@Override
+	protected CacheEntidadesEvn<TipoEtq> getCache(Usuario usu) throws ErroModelo {
 		return (CacheEtiquetas<TipoEtq>) CacheEtiquetasConsultas.getCache(usu).get(usu, consultaPadrao);
 	}
 
+	@Override
 	protected final void iniciarPropriedadesEnt(Usuario usu, Tag mtd, TipoEtq etq) {
 		etq.setMetadado(mtd);
 		etq.setId(mtd.getGuid());

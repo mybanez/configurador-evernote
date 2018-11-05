@@ -2,6 +2,7 @@ package meyn.cevn.modelo.referencia;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -17,9 +18,11 @@ import meyn.cevn.modelo.interesse.Interesse;
 import meyn.cevn.modelo.projeto.CadastroProjeto;
 import meyn.cevn.modelo.projeto.Projeto;
 import meyn.util.modelo.ErroModelo;
+import meyn.util.modelo.Modelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
+@Modelo(ChavesModelo.REFERENCIA)
 public class CadastroReferencia extends CadastroNota<Referencia> {
 	private static final String REPOSITORIO = "4. Referências";
 	private static final String GRUPO = "<4. Referência>";
@@ -34,7 +37,10 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 	@Override
 	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, Referencia ref) throws ErroModelo {
 		super.iniciarPropriedadesEnt(usu, mtd, ref);
-		List<String> lsIdsTag = new ArrayList<String>(mtd.getTagGuids());
+		List<String> lsIdsTag = mtd.getTagGuids();
+		if (lsIdsTag == null) {
+			lsIdsTag = Collections.emptyList(); 
+		}
 		Collection<Etiqueta> clFormatos = new ArrayList<Etiqueta>();
 		Collection<Etiqueta> clTemas = new ArrayList<Etiqueta>();
 		for (String id : lsIdsTag) {
@@ -53,7 +59,8 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 	@Override
 	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, NoteMetadata mtd, Referencia ref)
 			throws ErroCadastro {
-		List<String> lsIdsTag = new ArrayList<String>(mtd.getTagGuids());
+		List<String> lsIdsTag = mtd.getTagGuids();
+		lsIdsTag = lsIdsTag == null ? Collections.emptyList() : new ArrayList<String>(lsIdsTag);
 		for (Etiqueta etq : ref.getFormatos()) {
 			lsIdsTag.remove(etq.getId());
 		}

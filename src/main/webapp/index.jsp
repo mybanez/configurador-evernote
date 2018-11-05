@@ -1,13 +1,13 @@
 <html>
 
-   <head>
+<head>
 
-      <title>Redirecionando...</title>
+<title>Redirecionando...</title>
 
-   </head>
+</head>
 
-   <body>
-      <% response.sendRedirect("/faces/console.xhtml"); %>
-   </body>
+<body>
+	<% response.sendRedirect("/faces/console.xhtml"); %>
+</body>
 
 </html>

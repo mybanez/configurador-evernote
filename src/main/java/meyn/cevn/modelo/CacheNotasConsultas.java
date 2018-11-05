@@ -3,18 +3,10 @@ package meyn.cevn.modelo;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.evernote.clients.NoteStoreClient;
-import com.evernote.edam.error.EDAMNotFoundException;
-import com.evernote.edam.error.EDAMSystemException;
-import com.evernote.edam.error.EDAMUserException;
-import com.evernote.edam.limits.Constants;
 import com.evernote.edam.notestore.NoteFilter;
 import com.evernote.edam.notestore.NoteMetadata;
-import com.evernote.edam.notestore.NotesMetadataList;
 import com.evernote.edam.notestore.NotesMetadataResultSpec;
-import com.evernote.thrift.TException;
 
-import meyn.cevn.ClienteEvn;
 import meyn.util.Erro;
 import meyn.util.contexto.ContextoEmMemoria;
 import meyn.util.modelo.ErroModelo;
@@ -97,18 +89,7 @@ public class CacheNotasConsultas extends CacheEntidadesConsultas {
 				cacheNotas.clear();
 				cacheNotas.setAtualizado(true);
 				cacheNotas.setValidarEntidades(false);
-				NoteStoreClient noteStore = ClienteEvn.getNoteStore(usu);
-				int desloc = 0;
-				NotesMetadataList lsMtdsPag;
-				List<NoteMetadata> lsMtds = new ArrayList<NoteMetadata>();
-				do {
-					synchronized (noteStore) {
-						lsMtdsPag = noteStore.findNotesMetadata(infoConsultaNotas.getFiltro(), desloc,
-								Constants.EDAM_USER_NOTES_MAX, infoConsultaNotas.getCampos());
-					}
-					lsMtds.addAll(lsMtdsPag.getNotes());
-					desloc += lsMtdsPag.getNotesSize();
-				} while (lsMtdsPag.getTotalNotes() > desloc);
+				List<NoteMetadata> lsMtds = ClienteEvn.consultarNotas(usu, infoConsultaNotas.getFiltro(), infoConsultaNotas.getCampos());
 				if (emValidacao) {
 					for (NoteMetadata mtd : lsMtds) {
 						Nota nota = FabricaEntidade.getInstancia(infoConsultaNotas.getTipoEntidade());
@@ -144,8 +125,8 @@ public class CacheNotasConsultas extends CacheEntidadesConsultas {
 				cacheNotas.getLogger().debug("atualizado");
 			}
 			return cacheNotas;
-		} catch (EDAMUserException | EDAMSystemException | TException | EDAMNotFoundException e) {
-			throw new ErroModelo("Erro atualizando cache: " + infoConsultaNotas.getChaveCache(), e);
+		} catch (ErroModelo e) {
+			throw new ErroModelo("Erro carregando cache de consultas: " + infoConsultaNotas.getChaveCache(), e);
 		}
 	}
 }

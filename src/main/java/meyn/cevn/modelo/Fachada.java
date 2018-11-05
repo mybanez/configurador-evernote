@@ -48,13 +48,13 @@ public class Fachada extends FachadaModeloImpl {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	public String getNomeRepositorio(String modelo) throws ErroModelo {
+	public String consultarRepositorio(String modelo) throws ErroModelo {
 		return ((CadastroEvn) getCadastro(modelo)).getNomeRepositorio();
 	}
 	
 	@SuppressWarnings("rawtypes")
-	public void invalidarCaches(Usuario usu, String modelo) throws ErroModelo {
-		((CadastroEvn) getCadastro(modelo)).invalidarCaches(usu);
+	public void invalidarCache(Usuario usu, String modelo) throws ErroModelo {
+		((CadastroEvn) getCadastro(modelo)).invalidarCache(usu);
 	}
 
 	//// SUMÁRIOS ////
@@ -70,8 +70,8 @@ public class Fachada extends FachadaModeloImpl {
 		cadSum.gerarSumarioInteressesDetalhado(usu, raiz);
 	}
 
-	public void gerarSumarioInteresse(Usuario usu, String id) throws ErroModelo {
-		getCadastroSumario().gerarSumarioInteresse(usu, getCadastroInteresse().consultarPorChavePrimaria(usu, id));
+	public Sumario gerarSumarioInteresse(Usuario usu, String id) throws ErroModelo {
+		return getCadastroSumario().gerarSumarioInteresse(usu, getCadastroInteresse().consultarPorChavePrimaria(usu, id));
 	}
 
 	public void gerarSumarioProjetos(Usuario usu) throws ErroModelo {
@@ -85,8 +85,12 @@ public class Fachada extends FachadaModeloImpl {
 		cadSum.gerarSumarioProjetosDetalhado(usu, raiz);
 	}
 
-	public void gerarSumarioProjeto(Usuario usu, String id) throws ErroModelo {
-		getCadastroSumario().gerarSumarioProjeto(usu, getCadastroProjeto().consultarPorChavePrimaria(usu, id));
+	public Sumario gerarSumarioInicialProjeto(Usuario usu, String id) throws ErroModelo {
+		return getCadastroSumario().gerarSumarioInicialProjeto(usu, getCadastroProjeto().consultarPorChavePrimaria(usu, id));
+	}
+	
+	public Sumario gerarSumarioProjeto(Usuario usu, String id) throws ErroModelo {
+		return getCadastroSumario().gerarSumarioProjeto(usu, getCadastroProjeto().consultarPorChavePrimaria(usu, id));
 	}
 
 	public void gerarSumarioAcoes(Usuario usu) throws ErroModelo {
@@ -126,8 +130,8 @@ public class Fachada extends FachadaModeloImpl {
 		getCadastroSumario().gerarValidacaoProjetos(usu, getCadastroProjeto().validarTodos(usu));
 	}
 
-	public void gerarValidacaoProjeto(Usuario usu, String id) throws ErroModelo {
-		getCadastroSumario().gerarValidacaoProjeto(usu, getCadastroProjeto().validarPorChavePrimaria(usu, id));
+	public Sumario gerarValidacaoProjeto(Usuario usu, String id) throws ErroModelo {
+		return getCadastroSumario().gerarValidacaoProjeto(usu, getCadastroProjeto().validarPorChavePrimaria(usu, id));
 	}
 
 	public void gerarValidacaoAcoes(Usuario usu) throws ErroModelo {
@@ -144,24 +148,28 @@ public class Fachada extends FachadaModeloImpl {
 		CadastroEvn.validarEntidades(usu);
 	}
 
-	public void gerarValidacaoProjetosParcial(Usuario usu) throws ErroModelo {
+	public void gerarValidacaoParcialProjetos(Usuario usu) throws ErroModelo {
 		getCadastroSumario().gerarValidacaoProjetos(usu, getCadastroProjeto().consultarTodos(usu));
 	}
 
-	public void gerarValidacaoProjetoParcial(Usuario usu, String id) throws ErroModelo {
-		getCadastroSumario().gerarValidacaoProjeto(usu, getCadastroProjeto().consultarPorChavePrimaria(usu, id));
+	public Sumario gerarValidacaoParcialProjeto(Usuario usu, String id) throws ErroModelo {
+		return getCadastroSumario().gerarValidacaoProjeto(usu, getCadastroProjeto().consultarPorChavePrimaria(usu, id));
 	}
 
-	public void gerarValidacaoAcoesParcial(Usuario usu) throws ErroModelo {
+	public void gerarValidacaoParcialAcoes(Usuario usu) throws ErroModelo {
 		getCadastroSumario().gerarValidacaoAcoes(usu, getCadastroAcao().consultarTodos(usu));
 	}
 
-	public void gerarValidacaoReferenciasParcial(Usuario usu) throws ErroModelo {
+	public void gerarValidacaoParcialReferencias(Usuario usu) throws ErroModelo {
 		getCadastroSumario().gerarValidacaoReferencias(usu, getCadastroReferencia().consultarTodos(usu));
 	}
 
 	//// LOGS ////
 
+	public Nota consultarPorNome(Usuario usu, String nome) throws ErroModelo {
+		return getCadastroLog().consultarPorNome(usu, nome);
+	}
+	
 	public Nota gerarLogUsuario(Usuario usu) throws ErroModelo {
 		return getCadastroLog().gerarLogUsuario(usu);
 	}

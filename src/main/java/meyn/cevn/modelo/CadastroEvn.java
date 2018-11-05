@@ -53,12 +53,12 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 		return entidadeValidavel;
 	}
 
-	protected void invalidarCaches(Usuario usu) throws ErroModelo {
+	protected void invalidarCache(Usuario usu) throws ErroModelo {
 		CacheNotasConsultas.getCache(usu).invalidarCaches(chavesCache);
 		CacheEtiquetasConsultas.getCache(usu).invalidarCaches(chavesCache);
 	}
 
-	abstract CacheEntidadesEvn<TipoEnt> getCache(Usuario usu) throws ErroModelo;
+	protected abstract CacheEntidadesEvn<TipoEnt> getCache(Usuario usu) throws ErroModelo;
 
 	protected abstract void iniciarPropriedadesEnt(Usuario usu, TipoMtd mtd, TipoEnt ent) throws ErroModelo;
 

@@ -31,6 +31,9 @@ abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEv
 
 	@Override
 	public TipoEnt put(String id, TipoEnt ent) {
+		if (cacheNome.containsKey(ent.getNome())) {
+			getLogger().warn("Entidade duplicada: {}", ent.getNome());
+		}		
 		cacheNome.put(ent);
 		return super.put(id, ent);
 	}
@@ -101,9 +104,6 @@ abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEv
 	}
 
 	protected TipoEnt consultarPorNome(String nome) throws ErroModelo {
-		if (size() > cacheNome.size()) {
-			throw new ErroModelo("Nome não é chave primária no cache: " + getChave());
-		}
 		TipoEnt ent = cacheNome.get(nome);
 		if (ent == null) {
 			throw new ErroItemNaoEncontrado(nome);

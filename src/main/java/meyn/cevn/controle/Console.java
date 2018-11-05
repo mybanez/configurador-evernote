@@ -15,9 +15,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
-import meyn.cevn.ClienteEvn;
+import com.evernote.edam.type.Notebook;
+
 import meyn.cevn.ContextoEvn;
+import meyn.cevn.modelo.CacheNotebooks;
+import meyn.cevn.modelo.CacheTags;
 import meyn.cevn.modelo.ChavesModelo;
+import meyn.cevn.modelo.ClienteEvn;
 import meyn.cevn.modelo.EntidadeEvn;
 import meyn.cevn.modelo.FabricaFachada;
 import meyn.cevn.modelo.Fachada;
@@ -32,6 +36,7 @@ import meyn.cevn.modelo.sumario.Sumario;
 import meyn.cevn.util.FusoHorario;
 import meyn.util.Erro;
 import meyn.util.modelo.ErroModelo;
+import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 import meyn.util.modelo.entidade.FabricaEntidade;
 
 @SuppressWarnings("serial")
@@ -64,7 +69,7 @@ public class Console extends ManagedBeanEvn {
 		}
 
 		boolean nova = true;
-		
+
 		Usuario usuario;
 		int contadorProcessos = 0;
 		String tempoProc = "";
@@ -80,6 +85,7 @@ public class Console extends ManagedBeanEvn {
 			logger.debug("sessão console criada");
 		}
 
+		@SuppressWarnings("unused")
 		public boolean isNova() {
 			if (nova) {
 				nova = false;
@@ -215,10 +221,11 @@ public class Console extends ManagedBeanEvn {
 
 	private static final String OP_PROJETOS = CadastroSumario.OP_PROJETOS;
 	private static final String OP_VAL_PROJETOS = CadastroSumario.OP_VALIDACAO + CadastroSumario.OP_PROJETOS;
-	private static final String OP_VAL_PROJETOS_PAR = OP_VAL_PROJETOS + "PAR";
+	private static final String OP_VAL_PAR_PROJETOS = CadastroSumario.OP_VALIDACAO + "parcial_" + CadastroSumario.OP_PROJETOS;
+	private static final String OP_INI_PROJETO = "inicio_" + CadastroSumario.OP_PROJETO;
 	private static final String OP_PROJETO = CadastroSumario.OP_PROJETO;
 	private static final String OP_VAL_PROJETO = CadastroSumario.OP_VALIDACAO + CadastroSumario.OP_PROJETO;
-	private static final String OP_VAL_PROJETO_PAR = OP_VAL_PROJETO + "PAR";
+	private static final String OP_VAL_PAR_PROJETO = CadastroSumario.OP_VALIDACAO + "parcial_" + CadastroSumario.OP_PROJETO;
 	private Collection<Projeto> clProjs;
 	private Collection<Projeto> clProjsFiltrado;
 	private boolean gerarSumProjsCol = false;
@@ -275,7 +282,7 @@ public class Console extends ManagedBeanEvn {
 	private static final String OP_ACOES = CadastroSumario.OP_ACOES;
 	private static final String OP_ACOES_CALEND = CadastroSumario.OP_ACOES_CALENDARIO;
 	private static final String OP_VAL_ACOES = CadastroSumario.OP_VALIDACAO + CadastroSumario.OP_ACOES;
-	private static final String OP_VAL_ACOES_PAR = OP_VAL_ACOES + "PAR";
+	private static final String OP_VAL_PAR_ACOES = CadastroSumario.OP_VALIDACAO + "parcial_" + CadastroSumario.OP_ACOES;
 	private Collection<Acao> clAcoes;
 	private Collection<Acao> clAcoesFiltrado;
 	private boolean gerarSumAcoesCol = false;
@@ -313,7 +320,7 @@ public class Console extends ManagedBeanEvn {
 
 	private static final String OP_REFERENCIAS = CadastroSumario.OP_REFERENCIAS;
 	private static final String OP_VAL_REFERENCIAS = CadastroSumario.OP_VALIDACAO + CadastroSumario.OP_REFERENCIAS;
-	private static final String OP_VAL_REFERENCIAS_PAR = OP_VAL_REFERENCIAS + "PAR";
+	private static final String OP_VAL_PAR_REFERENCIAS = CadastroSumario.OP_VALIDACAO + "parcial_" + CadastroSumario.OP_REFERENCIAS;
 	private Collection<Referencia> clRefs;
 	private Collection<Referencia> clRefsFiltrado;
 	private boolean gerarSumRefsCol = false;
@@ -411,9 +418,12 @@ public class Console extends ManagedBeanEvn {
 
 	private abstract class ProcessoOperacao extends Thread {
 
-		ProcessoOperacao(boolean requerValidacao) throws ErroModelo {
+		boolean validacaoRequerida;
+
+		ProcessoOperacao(boolean validacaoRequerida) throws ErroModelo {
 			sessao.contadorProcessos++;
-			if (requerValidacao) {
+			this.validacaoRequerida = validacaoRequerida;
+			if (validacaoRequerida) {
 				validarEntidades();
 			}
 		}
@@ -433,7 +443,7 @@ public class Console extends ManagedBeanEvn {
 
 		void iniciarOperacao(Date inicio) {
 			synchronized (sessao) {
-				getLogger().trace("operação iniciada (processos={})", sessao.contadorProcessos);
+				logger.trace("operação iniciada (processos={})", sessao.contadorProcessos);
 				if (sessao.inicioProc == null) {
 					sessao.inicioProc = sessao.fimProc = inicio;
 				}
@@ -446,7 +456,7 @@ public class Console extends ManagedBeanEvn {
 				if (sessao.contadorProcessos == 0) {
 					sessao.fimProc = fim;
 				}
-				getLogger().trace("operação finalizada (processos={})", sessao.contadorProcessos);
+				logger.trace("operação finalizada (processos={})", sessao.contadorProcessos);
 			}
 		}
 
@@ -464,8 +474,7 @@ public class Console extends ManagedBeanEvn {
 	private static class InfoOperacaoLote extends InfoOperacao {
 		Operacao oprLote;
 
-		InfoOperacaoLote(String msgOperacao, String msgEntidade, String msgStatusSucesso, String msgStatusErro,
-				Operacao oprLote) {
+		InfoOperacaoLote(String msgOperacao, String msgEntidade, String msgStatusSucesso, String msgStatusErro, Operacao oprLote) {
 			super(msgOperacao, msgEntidade, msgStatusSucesso, msgStatusErro);
 			this.oprLote = oprLote;
 		}
@@ -475,12 +484,12 @@ public class Console extends ManagedBeanEvn {
 
 		InfoOperacaoLote info;
 
-		ProcessoOperacaoLote(boolean requerValidacao) throws ErroModelo {
-			super(requerValidacao);
+		ProcessoOperacaoLote(boolean validacaoRequerida) throws ErroModelo {
+			super(validacaoRequerida);
 		}
 
-		ProcessoOperacaoLote(InfoOperacaoLote info, boolean requerValidacao) throws ErroModelo {
-			super(requerValidacao);
+		ProcessoOperacaoLote(InfoOperacaoLote info, boolean validacaoRequerida) throws ErroModelo {
+			super(validacaoRequerida);
 			this.info = info;
 		}
 
@@ -503,7 +512,7 @@ public class Console extends ManagedBeanEvn {
 					sessao.saidaErro.append("*** Erro ").append(info.msgOperacaoMin).append(info.msgEntidadeMin);
 					sessao.saidaErro.append(" ***\n\n").append(Erro.toString(e)).append("\n");
 				}
-				getLogger().error("Erro {}{}", info.msgOperacaoMin, info.msgEntidadeMin, e);
+				logger.error("Erro {}{}", info.msgOperacaoMin, info.msgEntidadeMin, e);
 			}
 			fim = new Date();
 			synchronized (sessao.saidaPadrao) {
@@ -517,12 +526,6 @@ public class Console extends ManagedBeanEvn {
 
 	private static class InfoGeracaoSumarios extends InfoOperacaoLote {
 
-		InfoGeracaoSumarios(String msgEntSumPlr, boolean ehEntSumGenMasc, boolean ehSumario,
-				Operacao operacaoSums) {
-			super("Gerando ", formatarMsgSumario(msgEntSumPlr, ehEntSumGenMasc, ehSumario),
-					formatarMsgStatus(ehSumario), " não foram" + formatarMsgStatus(ehSumario), operacaoSums);
-		}
-
 		static String formatarMsgSumario(String msgEntSumPlr, boolean ehEntSumGenMasc, boolean ehSumario) {
 			return (ehSumario ? "Sumários" : "Validações") + " coletiv" + (ehSumario ? "os" : "as") + " d"
 					+ (ehEntSumGenMasc ? "os " : "as ") + msgEntSumPlr;
@@ -530,6 +533,11 @@ public class Console extends ManagedBeanEvn {
 
 		static String formatarMsgStatus(boolean ehSumario) {
 			return " gerad" + (ehSumario ? "o" : "a") + "s com sucesso";
+		}
+
+		InfoGeracaoSumarios(String msgEntSumPlr, boolean ehEntSumGenMasc, boolean ehSumario, Operacao operacaoSums) {
+			super("Gerando ", formatarMsgSumario(msgEntSumPlr, ehEntSumGenMasc, ehSumario), formatarMsgStatus(ehSumario),
+					" não foram" + formatarMsgStatus(ehSumario), operacaoSums);
 		}
 	}
 
@@ -541,22 +549,9 @@ public class Console extends ManagedBeanEvn {
 	}
 
 	private static class InfoGeracaoSumario<TipoEnt extends EntidadeEvn<?>> extends InfoOperacao {
-		String msgSumarioInd;
-		String msgSumarioIndMin;
-		OperacaoEntidade<TipoEnt> oprSumario;
-
-		InfoGeracaoSumario(String msgEntSum, boolean ehEntSumGenMasc, boolean ehSumario,
-				OperacaoEntidade<TipoEnt> operacaoSum) {
-			super("Gerando ", formatarMsgSumario(msgEntSum + "s", ehEntSumGenMasc, ehSumario),
-					formatarMsgStatus(ehSumario), " não foi" + formatarMsgStatus(ehSumario));
-			this.oprSumario = operacaoSum;
-			this.msgSumarioInd = formatarMsgSumarioInd(msgEntSum, ehEntSumGenMasc, ehSumario);
-			this.msgSumarioIndMin = msgSumarioInd.toLowerCase();
-		}
 
 		static String formatarMsgSumario(String msgEntSumPlr, boolean ehEntSumGenMasc, boolean ehSumario) {
-			return (ehSumario ? "Sumários" : "Validações") + " individuais d" + (ehEntSumGenMasc ? "os " : "as ")
-					+ msgEntSumPlr;
+			return (ehSumario ? "Sumários" : "Validações") + " individuais d" + (ehEntSumGenMasc ? "os " : "as ") + msgEntSumPlr;
 		}
 
 		static String formatarMsgSumarioInd(String msgEntSum, boolean ehEntSumGenMasc, boolean ehSumario) {
@@ -566,6 +561,18 @@ public class Console extends ManagedBeanEvn {
 		static String formatarMsgStatus(boolean ehSumario) {
 			return " gerad" + (ehSumario ? "o" : "a") + " com sucesso";
 		}
+
+		String msgSumarioInd;
+		String msgSumarioIndMin;
+		OperacaoEntidade<TipoEnt> oprSumario;
+
+		InfoGeracaoSumario(String msgEntSum, boolean ehEntSumGenMasc, boolean ehSumario, OperacaoEntidade<TipoEnt> operacaoSum) {
+			super("Gerando ", formatarMsgSumario(msgEntSum + "s", ehEntSumGenMasc, ehSumario), formatarMsgStatus(ehSumario),
+					" não foi" + formatarMsgStatus(ehSumario));
+			this.oprSumario = operacaoSum;
+			this.msgSumarioInd = formatarMsgSumarioInd(msgEntSum, ehEntSumGenMasc, ehSumario);
+			this.msgSumarioIndMin = msgSumarioInd.toLowerCase();
+		}
 	}
 
 	private class ProcessoGeracaoSumario<TipoEnt extends EntidadeEvn<?>> extends ProcessoOperacao {
@@ -574,48 +581,63 @@ public class Console extends ManagedBeanEvn {
 		Collection<TipoEnt> clEnts;
 
 		ProcessoGeracaoSumario(InfoGeracaoSumario<TipoEnt> info, Collection<TipoEnt> clEnts) throws ErroModelo {
-			super(info.msgEntidadeMin.startsWith("val"));
+			super(info.msgEntidade.startsWith("Validação"));
 			this.info = info;
 			this.clEnts = clEnts;
 		}
 
 		@SuppressWarnings("unchecked")
 		ProcessoGeracaoSumario(InfoGeracaoSumario<? extends EntidadeEvn<?>> info, List<EntidadeEvn<?>> clEnts) throws ErroModelo {
-			this((InfoGeracaoSumario<TipoEnt>) info, (Collection<TipoEnt>)clEnts);
+			this((InfoGeracaoSumario<TipoEnt>) info, (Collection<TipoEnt>) clEnts);
 		}
 
 		@Override
 		public void run() {
 			super.run();
+
 			Date inicio, fim = null;
 			inicio = new Date();
 			iniciarOperacao(inicio);
-			synchronized (sessao.saidaPadrao) {
-				adicionarRotuloTempo(inicio);
-				sessao.saidaPadrao.append(info.msgOperacao).append(info.msgEntidadeMin).append("...\n");
-			}
-			for (TipoEnt ent : clEnts) {
-				String msgStatus = info.msgStatusSucesso;
-				try {
-					info.oprSumario.executar(sessao.usuario, ent);
-				} catch (Exception e) {
-					msgStatus = info.msgStatusErro;
-					synchronized (sessao.saidaErro) {
-						sessao.saidaErro.append("*** Erro ").append(info.msgOperacaoMin);
-						sessao.saidaErro.append(info.msgSumarioIndMin).append(ent.getNome());
-						sessao.saidaErro.append(" ***\n\n").append(Erro.toString(e)).append("\n");
-					}
-					getLogger().error("Erro {}{}{}", info.msgOperacaoMin, info.msgSumarioIndMin, ent.getNome(), e);
-				}
-				fim = new Date();
+			if (!clEnts.isEmpty()) {
 				synchronized (sessao.saidaPadrao) {
-					adicionarRotuloTempo(fim);
-					sessao.saidaPadrao.append(info.msgSumarioInd).append(ent.getNome()).append(msgStatus);
-					adicionarTempoProcessamento(inicio, fim);
+					adicionarRotuloTempo(inicio);
+					sessao.saidaPadrao.append(info.msgOperacao).append(info.msgEntidadeMin).append("...\n");
 				}
-				inicio = new Date();
+				for (TipoEnt ent : clEnts) {
+					String msgStatus = info.msgStatusSucesso;
+					try {
+						info.oprSumario.executar(sessao.usuario, ent);
+					} catch (Exception e) {
+						msgStatus = info.msgStatusErro;
+						synchronized (sessao.saidaErro) {
+							sessao.saidaErro.append("*** Erro ").append(info.msgOperacaoMin);
+							sessao.saidaErro.append(info.msgSumarioIndMin).append("\"").append(ent.getNome());
+							sessao.saidaErro.append("\" ***\n\n").append(Erro.toString(e)).append("\n");
+						}
+						logger.error("Erro {}{}\"{}\"", info.msgOperacaoMin, info.msgSumarioIndMin, ent.getNome(), e);
+					}
+					fim = new Date();
+					synchronized (sessao.saidaPadrao) {
+						adicionarRotuloTempo(fim);
+						sessao.saidaPadrao.append(info.msgSumarioInd).append("\"");
+						sessao.saidaPadrao.append(ent.getNome()).append("\"").append(msgStatus);
+						adicionarTempoProcessamento(inicio, fim);
+					}
+					inicio = new Date();
+				}
 			}
 			finalizarOperacao(fim);
+		}
+	}
+
+	private class ProcessoCriacaoSumario<TipoEnt extends EntidadeEvn<?>> extends ProcessoGeracaoSumario<TipoEnt> {
+
+		ProcessoCriacaoSumario(InfoGeracaoSumario<TipoEnt> info, Collection<TipoEnt> clEnts) throws ErroModelo {
+			super(info, clEnts = new ArrayList<TipoEnt>(clEnts));
+			String propSum = "sumario" + (validacaoRequerida ? "Validacao" : "");
+			clEnts.removeIf((ent) -> {
+				return ent.get(propSum) != null;
+			});
 		}
 	}
 
@@ -623,15 +645,8 @@ public class Console extends ManagedBeanEvn {
 
 		ProcessoExclusaoSumarios() throws ErroModelo {
 			super(false);
-			info = new InfoOperacaoLote("Excluindo ", "Sumários", " excluídos com sucesso!",
-					" não foram excluídos com sucesso!", (Usuario usu) -> {
-						fachada.excluirTodos(usu, ChavesModelo.SUMARIO);
-						fachada.invalidarCaches(usu, ChavesModelo.SUMARIO);
-						fachada.invalidarCaches(usu, ChavesModelo.INTERESSE);
-						fachada.invalidarCaches(usu, ChavesModelo.PROJETO);
-						fachada.consultarTodos(usu, ChavesModelo.INTERESSE);
-						fachada.consultarTodos(usu, ChavesModelo.PROJETO);
-					});
+			info = new InfoOperacaoLote("Excluindo ", "Sumários", " excluídos com sucesso!", " não foram excluídos com sucesso!",
+					(Usuario usu) -> fachada.excluirTodos(usu, ChavesModelo.SUMARIO));
 		}
 	}
 
@@ -639,8 +654,8 @@ public class Console extends ManagedBeanEvn {
 
 		ProcessoExclusaoLogs() throws ErroModelo {
 			super(false);
-			info = new InfoOperacaoLote("Excluindo ", "Logs", " excluídos com sucesso!",
-					" não foram excluídos com sucesso!", (Usuario usu) -> fachada.excluirLogsAntigos(usu));
+			info = new InfoOperacaoLote("Excluindo ", "Logs", " excluídos com sucesso!", " não foram excluídos com sucesso!",
+					(Usuario usu) -> fachada.excluirLogsAntigos(usu));
 		}
 	}
 
@@ -653,22 +668,22 @@ public class Console extends ManagedBeanEvn {
 			put(OP_PROJETOS, new InfoGeracaoSumarios("projetos", true, true, operSums));
 			operSums = (Usuario usu) -> fachada.gerarValidacaoProjetos(usu);
 			put(OP_VAL_PROJETOS, new InfoGeracaoSumarios("projetos", true, false, operSums));
-			operSums = (Usuario usu) -> fachada.gerarValidacaoProjetosParcial(usu);
-			put(OP_VAL_PROJETOS_PAR, new InfoGeracaoSumarios("projetos", true, false, operSums));
+			operSums = (Usuario usu) -> fachada.gerarValidacaoParcialProjetos(usu);
+			put(OP_VAL_PAR_PROJETOS, new InfoGeracaoSumarios("projetos", true, false, operSums));
 			operSums = (Usuario usu) -> fachada.gerarSumarioAcoes(usu);
 			put(OP_ACOES, new InfoGeracaoSumarios("ações", false, true, operSums));
 			operSums = (Usuario usu) -> fachada.gerarSumarioAcoesCalendario(usu);
 			put(OP_ACOES_CALEND, new InfoGeracaoSumarios("ações", false, true, operSums));
 			operSums = (Usuario usu) -> fachada.gerarValidacaoAcoes(usu);
 			put(OP_VAL_ACOES, new InfoGeracaoSumarios("ações", false, false, operSums));
-			operSums = (Usuario usu) -> fachada.gerarValidacaoAcoesParcial(usu);
-			put(OP_VAL_ACOES_PAR, new InfoGeracaoSumarios("ações", false, false, operSums));
+			operSums = (Usuario usu) -> fachada.gerarValidacaoParcialAcoes(usu);
+			put(OP_VAL_PAR_ACOES, new InfoGeracaoSumarios("ações", false, false, operSums));
 			operSums = (Usuario usu) -> fachada.gerarSumarioReferencias(usu);
 			put(OP_REFERENCIAS, new InfoGeracaoSumarios("referências", false, true, operSums));
 			operSums = (Usuario usu) -> fachada.gerarValidacaoReferencias(usu);
 			put(OP_VAL_REFERENCIAS, new InfoGeracaoSumarios("referências", false, false, operSums));
-			operSums = (Usuario usu) -> fachada.gerarValidacaoReferenciasParcial(usu);
-			put(OP_VAL_REFERENCIAS_PAR, new InfoGeracaoSumarios("referências", false, false, operSums));
+			operSums = (Usuario usu) -> fachada.gerarValidacaoParcialReferencias(usu);
+			put(OP_VAL_PAR_REFERENCIAS, new InfoGeracaoSumarios("referências", false, false, operSums));
 		}
 	};
 
@@ -676,20 +691,22 @@ public class Console extends ManagedBeanEvn {
 		{
 			OperacaoEntidade<Interesse> oprSumIntr;
 			OperacaoEntidade<Projeto> oprSumPrj;
-			oprSumIntr = (Usuario usu, Interesse intr) -> fachada.gerarSumarioInteresse(usu, intr.getId());
+			oprSumIntr = (Usuario usu, Interesse intr) -> intr.setSumario(fachada.gerarSumarioInteresse(usu, intr.getId()));
 			put(OP_INTERESSE, new InfoGeracaoSumario<Interesse>("interesse", true, true, oprSumIntr));
-			oprSumPrj = (Usuario usu, Projeto prj) -> fachada.gerarSumarioProjeto(usu, prj.getId());
+			oprSumPrj = (Usuario usu, Projeto prj) -> prj.setSumario(fachada.gerarSumarioInicialProjeto(usu, prj.getId()));
+			put(OP_INI_PROJETO, new InfoGeracaoSumario<Projeto>("projeto", true, true, oprSumPrj));
+			oprSumPrj = (Usuario usu, Projeto prj) -> prj.setSumario(fachada.gerarSumarioProjeto(usu, prj.getId()));
 			put(OP_PROJETO, new InfoGeracaoSumario<Projeto>("projeto", true, true, oprSumPrj));
-			oprSumPrj = (Usuario usu, Projeto prj) -> fachada.gerarValidacaoProjeto(usu, prj.getId());
+			oprSumPrj = (Usuario usu, Projeto prj) -> prj.setSumarioValidacao(fachada.gerarValidacaoProjeto(usu, prj.getId()));
 			put(OP_VAL_PROJETO, new InfoGeracaoSumario<Projeto>("projeto", true, false, oprSumPrj));
-			oprSumPrj = (Usuario usu, Projeto prj) -> fachada.gerarValidacaoProjetoParcial(usu, prj.getId());
-			put(OP_VAL_PROJETO_PAR, new InfoGeracaoSumario<Projeto>("projeto", true, false, oprSumPrj));
+			oprSumPrj = (Usuario usu, Projeto prj) -> prj.setSumarioValidacao(fachada.gerarValidacaoParcialProjeto(usu, prj.getId()));
+			put(OP_VAL_PAR_PROJETO, new InfoGeracaoSumario<Projeto>("projeto", true, false, oprSumPrj));
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		<TipoEnt extends EntidadeEvn<?>> InfoGeracaoSumario<TipoEnt> get(String key) {
 			return (InfoGeracaoSumario<TipoEnt>) super.get(key);
-		}		
+		}
 	};
 
 	private MapaOperacoes mpOperacoes = new MapaOperacoes();
@@ -704,61 +721,114 @@ public class Console extends ManagedBeanEvn {
 			sessao.saidaErro.append("*** Erro inesperado ***\n\n");
 			sessao.saidaErro.append(Erro.toString(e)).append("\n");
 		}
-		getLogger().error("Erro inesperado", e);
+		logger.error("Erro inesperado", e);
 	}
 
-	public void iniciarEntidades() throws ErroModelo {
+	private void iniciarEntidades() throws ErroModelo {
+		logger.trace("iniciando entidades (processos={})", sessao.contadorProcessos);
 		Usuario usu = sessao.usuario;
+		boolean forcarConsistencia = false;
 		// Só checa mudanças se não houver processamento ativo
-		getLogger().trace("iniciando entidades (processos={})", sessao.contadorProcessos);
 		if (sessao.contadorProcessos == 0) {
-			ClienteEvn.invalidarCaches(usu);
+			consultarAtualizacoes(usu);
+			forcarConsistencia = Boolean.parseBoolean(getParametroRequisicao("forcarConsistencia"));
+		}
+		carregarEntidades(usu, forcarConsistencia);
+		logger.debug("entidades iniciadas");
+	}
+
+	private void validarEntidades() throws ErroModelo {
+		if (!entidadesValidadas) {
+			Usuario usu = sessao.usuario;
+			fachada.validarEntidades(usu);
+			entidadesValidadas = true;
+			carregarEntidades(usu, false);
+			logger.debug("entidades validadas");
+		}
+	}
+
+	private void carregarEntidades(Usuario usu, boolean forcarConsistencia) throws ErroModelo {
+		logger.trace("forçar consistência: {}", forcarConsistencia);
+		if (forcarConsistencia) {
+			invalidarCachesEntidades(usu);
 		}
 		clSums = fachada.consultarTodos(usu, ChavesModelo.SUMARIO);
 		clIntrs = fachada.consultarTodos(usu, ChavesModelo.INTERESSE);
 		clProjs = fachada.consultarTodos(usu, ChavesModelo.PROJETO);
 		clAcoes = fachada.consultarTodos(usu, ChavesModelo.ACAO);
 		clRefs = fachada.consultarTodos(usu, ChavesModelo.REFERENCIA);
-		clLogs = fachada.consultarTodos(usu, ChavesModelo.LOG);
-		verificarConsistenciaSumarios(usu);
-		getLogger().debug("entidades iniciadas");
-	}
-
-	public void validarEntidades() throws ErroModelo {
-		if (!entidadesValidadas) {
-			Usuario usu = sessao.usuario;
-			fachada.validarEntidades(usu);
-			fachada.consultarTodos(usu, ChavesModelo.INTERESSE);
-			fachada.consultarTodos(usu, ChavesModelo.PROJETO);
-			fachada.consultarTodos(usu, ChavesModelo.ACAO);
-			fachada.consultarTodos(usu, ChavesModelo.REFERENCIA);
-			entidadesValidadas = true;
-			getLogger().debug("entidades validadas");
-		}
-	}
-
-	public void recarregarEntidade() throws ErroModelo {
-		Usuario usu = sessao.usuario;
-		String modelo = ChavesModelo.NOME_PACOTE + getParametroRequisicao("modelo").toUpperCase();
-		fachada.invalidarCaches(usu, modelo);
-		fachada.consultarTodos(usu, modelo);
-		getLogger().debug("entidades recarregadas: {}", modelo);
-	}
-
-	void verificarConsistenciaSumarios(Usuario usu) throws ErroModelo {
-		// Exclui sumários individuais para entidades que não existem mais
-		if (sessao.isNova()) {
-			fachada.excluirSumariosInvalidos(usu);
-		}
-		// Verifica se todos os sumários individuais foram criados
+		// Registra as inconsistências encontradas
 		Collection<Sumario> clSumsInd = new ArrayList<Sumario>(clSums);
 		clSumsInd.removeIf((sum) -> {
 			String nome = sum.getNome();
-			return !nome.startsWith("Sumário ") && !nome.startsWith("Validação ");
+			return !nome.startsWith("Sumário do") && !nome.startsWith("Validação do");
 		});
-		if (clSumsInd.size() < clProjs.size() * 2 + clIntrs.size()) {
-			getLogger().error("Quantidade de sumários individuais inconsistente: {} (intrs={}, projs={})",
-					clSumsInd.size(), clIntrs.size(), clProjs.size());
+		if (clSumsInd.size() != clProjs.size() * 2 + clIntrs.size()) {
+			logger.warn("Quantidade de sumários individuais inconsistente: {} (intrs={}, projs={})", clSumsInd.size(), clIntrs.size(),
+					clProjs.size());
+		}
+		if (forcarConsistencia) {
+			fachada.excluirSumariosInvalidos(usu);
+		}
+		clLogs = fachada.consultarTodos(usu, ChavesModelo.LOG);
+		// Garante a exibição de um log recém criado
+		try {
+			fachada.consultarPorNome(usu, usu.getLog().getNome());
+		} catch (ErroItemNaoEncontrado e) {
+			clLogs.add(usu.getLog());
+		}
+	}
+
+	private void invalidarCachesEntidades(Usuario usu) throws ErroModelo {
+		fachada.invalidarCache(usu, ChavesModelo.SUMARIO);
+		fachada.invalidarCache(usu, ChavesModelo.INTERESSE);
+		fachada.invalidarCache(usu, ChavesModelo.PROJETO);
+		fachada.invalidarCache(usu, ChavesModelo.ACAO);
+		fachada.invalidarCache(usu, ChavesModelo.REFERENCIA);
+	}
+
+	private void consultarAtualizacoes(Usuario usu) throws ErroModelo {
+		CacheTags cacheTag = CacheTags.getCache(usu);
+		CacheNotebooks cacheNtb = CacheNotebooks.getCache(usu);
+		Collection<String> clModelos = new ArrayList<String>();
+		clModelos.add(ChavesModelo.SUMARIO);
+		clModelos.add(ChavesModelo.PROJETO);
+		clModelos.add(ChavesModelo.ACAO);
+		clModelos.add(ChavesModelo.REFERENCIA);
+		clModelos.add(ChavesModelo.LOG);
+		Collection<String> clIds = new ArrayList<String>();
+		for (String modelo : clModelos) {
+			String nomeRepo = fachada.consultarRepositorio(modelo);
+			Notebook ntb = cacheNtb.get(nomeRepo);
+			if (ntb != null) {
+				clIds.add(ntb.getGuid());
+			} else {
+				for (Notebook ntbPilha : cacheNtb.consultarPorPilha(nomeRepo)) {
+					clIds.add(ntbPilha.getGuid());
+				}
+			}
+		}
+		Collection<String> lsIdsAtu = ClienteEvn.consultarAtualizacoes(usu, clIds);
+		if (lsIdsAtu.contains(ClienteEvn.ATU_TAGS)) {
+			lsIdsAtu.remove(ClienteEvn.ATU_TAGS);
+			cacheTag.invalidar();
+			invalidarCachesEntidades(usu);
+			logger.debug("atualizar Tags");
+		}
+		if (lsIdsAtu.contains(ClienteEvn.ATU_NOTEBOOKS)) {
+			lsIdsAtu.remove(ClienteEvn.ATU_NOTEBOOKS);
+			cacheNtb.invalidar();
+			logger.debug("atualizar Notebooks");
+		}
+		String idLog = cacheNtb.get(fachada.consultarRepositorio(ChavesModelo.LOG)).getGuid();
+		if (lsIdsAtu.contains(idLog)) {
+			lsIdsAtu.remove(idLog);
+			fachada.invalidarCache(usu, ChavesModelo.LOG);
+			logger.debug("atualizar Logs");
+		}
+		if (lsIdsAtu.size() > 0) {
+			invalidarCachesEntidades(usu);
+			logger.debug("atualizar Entidades");
 		}
 	}
 
@@ -771,7 +841,7 @@ public class Console extends ManagedBeanEvn {
 				new ProcessoGeracaoSumarios(mpOperacoes.get(oper)).iniciar(false);
 			} else {
 				String[] tokens = oper.split("_");
-				String modelo = ChavesModelo.NOME_PACOTE + tokens[tokens.length - 1].toUpperCase();
+				String modelo = ChavesModelo.PACOTE + "." + tokens[tokens.length - 1].toUpperCase();
 
 				InfoGeracaoSumario<? extends EntidadeEvn<?>> info = mpOperacoesEnt.get(oper);
 				EntidadeEvn<?> ent = FabricaEntidade.getInstancia(new HashMap<String, Object>() {
@@ -791,6 +861,15 @@ public class Console extends ManagedBeanEvn {
 	public void gerarSumariosConsole() {
 		try {
 			sessao.zerarTempoProcessamento();
+			// Cria os sumários individuais, se necessário
+			Collection<ProcessoOperacao> clProcessosCriacao = new ArrayList<ProcessoOperacao>();
+			clProcessosCriacao.add(new ProcessoCriacaoSumario<Interesse>(mpOperacoesEnt.get(OP_INTERESSE), clIntrs));
+			clProcessosCriacao.add(new ProcessoCriacaoSumario<Projeto>(mpOperacoesEnt.get(OP_VAL_PAR_PROJETO), clProjs));
+			clProcessosCriacao.add(new ProcessoCriacaoSumario<Projeto>(mpOperacoesEnt.get(OP_INI_PROJETO), clProjs));
+			for (ProcessoOperacao processo : clProcessosCriacao) {
+				processo.iniciar(false);
+			}
+			// Cria/atualiza os sumários selecionados
 			Collection<ProcessoOperacao> clProcessos = new ArrayList<ProcessoOperacao>();
 			if (gerarSumIntrsCol) {
 				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_INTERESSES)));
@@ -805,22 +884,22 @@ public class Console extends ManagedBeanEvn {
 				clProcessos.add(new ProcessoGeracaoSumario<Projeto>(mpOperacoesEnt.get(OP_PROJETO), clProjs));
 			}
 			if (gerarValProjsCol) {
-				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_VAL_PROJETOS_PAR)));
+				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_VAL_PAR_PROJETOS)));
 			}
 			if (gerarValProjsInd) {
-				clProcessos.add(new ProcessoGeracaoSumario<Projeto>(mpOperacoesEnt.get(OP_VAL_PROJETO_PAR), clProjs));
+				clProcessos.add(new ProcessoGeracaoSumario<Projeto>(mpOperacoesEnt.get(OP_VAL_PAR_PROJETO), clProjs));
 			}
 			if (gerarSumAcoesCol) {
 				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_ACOES)));
 			}
 			if (gerarValAcoesCol) {
-				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_VAL_ACOES_PAR)));
+				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_VAL_PAR_ACOES)));
 			}
 			if (gerarSumRefsCol) {
 				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_REFERENCIAS)));
 			}
 			if (gerarValRefsCol) {
-				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_VAL_REFERENCIAS_PAR)));
+				clProcessos.add(new ProcessoGeracaoSumarios(mpOperacoes.get(OP_VAL_PAR_REFERENCIAS)));
 			}
 			for (ProcessoOperacao processo : clProcessos) {
 				processo.iniciar(true);

@@ -9,10 +9,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import meyn.cevn.ClienteEvn;
+import org.apache.logging.log4j.Logger;
+
 import meyn.cevn.modelo.CadastroEvn;
 import meyn.cevn.modelo.CadastroNota;
 import meyn.cevn.modelo.ChavesModelo;
+import meyn.cevn.modelo.ClienteEvn;
 import meyn.cevn.modelo.EntidadeEvn;
 import meyn.cevn.modelo.Grupo;
 import meyn.cevn.modelo.Nota;
@@ -23,11 +25,13 @@ import meyn.cevn.modelo.projeto.CadastroProjeto;
 import meyn.cevn.modelo.projeto.Projeto;
 import meyn.cevn.modelo.referencia.Referencia;
 import meyn.cevn.util.FusoHorario;
+import meyn.util.modelo.Modelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 import meyn.util.modelo.entidade.ErroPropriedadeEntidadeNaoDefinida;
 import meyn.util.modelo.entidade.FabricaEntidade;
 
+@Modelo(ChavesModelo.SUMARIO)
 public class CadastroSumario extends CadastroNota<Sumario> {
 
 	public static final String OP_VALIDACAO = "validacao_";
@@ -40,7 +44,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 	private static final String TITULO_GRUPOS = " - Grupos";
 
 	private static final String EXP_TITULO = "(Sumário|Validação)(\\sdo\\s(Projeto|Interesse))?\\s-\\s(\\S.*)";
-	
+
 	private static final String URL_SUMARIO = "/faces/console.xhtml?sumario=";
 	private static final String URL_VALIDACAO = URL_SUMARIO + OP_VALIDACAO;
 	private static final String URL_ID = "&amp;id=";
@@ -70,8 +74,8 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 
 	private final GeradorENML<Interesse> grDetIntrVazio = (cont, proj) -> {
 	};
-	private final GeradorENML<Interesse> grDetIntr = (cont, intr) -> gerarDetalhamentoInteresse(cont, intr,
-			ESTILO_TEXTO_PEQUENO_1, ESTILO_URL_PEQUENO_2);
+	private final GeradorENML<Interesse> grDetIntr = (cont, intr) -> gerarDetalhamentoInteresse(cont, intr, ESTILO_TEXTO_PEQUENO_1,
+			ESTILO_URL_PEQUENO_2);
 
 	public Sumario consultarPorInteresse(Usuario usu, Interesse intr) throws ErroCadastro {
 		return consultarPorNome(usu, TITULO_SUMARIO + TITULO_INTERESSE + intr.getNome());
@@ -101,8 +105,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		return gerarSumario(TITULO_INTERESSES + TITULO_DETALHADO, OP_INTERESSES, usu, raiz, grDetIntr);
 	}
 
-	private void gerarDetalhamentoInteresse(StringBuffer cont, Interesse intr, String estiloTitulo,
-			String estiloItemURL) {
+	private void gerarDetalhamentoInteresse(StringBuffer cont, Interesse intr, String estiloTitulo, String estiloItemURL) {
 		GeradorENML<String> grTitulo = (cnt, tit) -> gerarItem(cnt, tit, estiloTitulo);
 		gerarInicioLista(cont);
 		// Projetos
@@ -126,36 +129,45 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 	private static final String TITULO_PROJETOS = " - Projetos";
 
 	private static final String PREFIXO_URL_PAINEL_PROJETO = "<div style=\"text-align: center;\"><a href=\"";
-	private static final String SUFIXO_URL_PAINEL_PROJETO = "\" style=\""
-			+ ESTILO_URL_TOPO.replace("(", "\\(").replace(")", "\\)") + "\">SUMÁRIO</a></div><hr/>";
+	private static final String SUFIXO_URL_PAINEL_PROJETO = "\" style=\"" + ESTILO_URL_TOPO.replace("(", "\\(").replace(")", "\\)")
+			+ "\">SUMÁRIO</a></div><hr/>";
 	private static final String PREFIXO_URL_VALIDACAO_PROJETO = "<div style=\"text-align: center;\"><a href=\"";
 	private static final String SUFIXO_URL_VALIDACAO_PROJETO = "\" style=\""
 			+ ESTILO_URL_TOPO_PEQUENO.replace("(", "\\(").replace(")", "\\)") + "\">Sumário</a></div><hr/>";
 
-	private static final String EXP_URL_PAINEL_PROJETO = "(?s)(.*<en-note(?:(?![/>]).)*)(/)?(>\\s*)(?:("
-			+ PREFIXO_URL_PAINEL_PROJETO + ")(.*)(" + SUFIXO_URL_PAINEL_PROJETO + "))?(.*)";
-	private static final String EXP_URL_VALIDACAO_PROJETO = "(?s)((?:(?!<hr/>).)*<hr/>\\s*)(?:("
-			+ PREFIXO_URL_VALIDACAO_PROJETO + ")(.*)(" + SUFIXO_URL_VALIDACAO_PROJETO + "))?(.*)";
+	private static final String EXP_URL_PAINEL_PROJETO = "(?s)(.*<en-note(?:(?![/>]).)*)(/)?(>\\s*)(?:(" + PREFIXO_URL_PAINEL_PROJETO
+			+ ")((?:(?!" + SUFIXO_URL_PAINEL_PROJETO + ").)*)(" + SUFIXO_URL_PAINEL_PROJETO + "))?(.*)";
+	private static final String EXP_URL_VALIDACAO_PROJETO = "(?s)((?:(?!<hr/>).)*<hr/>\\s*)(?:(" + PREFIXO_URL_VALIDACAO_PROJETO
+			+ ")((?:(?!" + SUFIXO_URL_VALIDACAO_PROJETO + ").)*)(" + SUFIXO_URL_VALIDACAO_PROJETO + "))?(.*)";
 
 	private final GeradorENML<Projeto> grDetProjVazio = (cont, proj) -> {
 	};
-	private final GeradorENML<Projeto> grDetProj = (cont, proj) -> gerarDetalhamentoProjeto(cont, proj,
-			ESTILO_TEXTO_PEQUENO_1, ESTILO_URL_PEQUENO_1, ESTILO_TEXTO_PEQUENO_2, ESTILO_URL_PEQUENO_2);
+	private final GeradorENML<Projeto> grDetProj = (cont, proj) -> gerarDetalhamentoProjeto(cont, proj, ESTILO_TEXTO_PEQUENO_1,
+			ESTILO_URL_PEQUENO_1, ESTILO_TEXTO_PEQUENO_2, ESTILO_URL_PEQUENO_2);
 
 	public Sumario consultarPorProjeto(Usuario usu, Projeto proj) throws ErroCadastro {
 		return consultarPorNome(usu, TITULO_SUMARIO + TITULO_PROJETO + proj.getNome());
 	}
 
 	public Sumario gerarSumarioInicialProjeto(Usuario usu, Projeto proj) throws ErroCadastro {
+		Logger logger = getLogger();
 		Sumario sum = gerarSumarioProjeto(usu, proj);
 		// Atualizar url no painel do projeto
 		CadastroProjeto cadProj = getCadastro(ChavesModelo.PROJETO);
 		cadProj.carregarConteudo(usu, proj);
 		String contProj = proj.getConteudo();
+		logger.trace("Conteúdo do painel do projeto: {}", contProj);
+		logger.trace("Grupo $1: {}", contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$1"));
+		logger.trace("Grupo $2: {}", contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$2"));
+		logger.trace("Grupo $3: {}", contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$3"));
+		logger.trace("Grupo $4: {}", contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$4"));
+		logger.trace("Grupo $5: {}", contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$5"));
+		logger.trace("Grupo $6: {}", contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$6"));
+		logger.trace("Grupo $7: {}", contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$7"));
 		if (contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$5").equals("")) {
 			String sufixoPainel = contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$2").equals("") ? "" : "</en-note>";
-			proj.setConteudo(contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$1$3" + PREFIXO_URL_PAINEL_PROJETO
-					+ sum.getURL() + SUFIXO_URL_PAINEL_PROJETO + "$7" + sufixoPainel));
+			proj.setConteudo(contProj.replaceFirst(EXP_URL_PAINEL_PROJETO,
+					"$1$3" + PREFIXO_URL_PAINEL_PROJETO + sum.getURL() + SUFIXO_URL_PAINEL_PROJETO + "$7" + sufixoPainel));
 		} else {
 			proj.setConteudo(contProj.replaceFirst(EXP_URL_PAINEL_PROJETO, "$1$3$4" + sum.getURL() + "$6$7"));
 		}
@@ -164,6 +176,12 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		Sumario sumValid = proj.getSumarioValidacao();
 		carregarConteudo(usu, sumValid);
 		String contValid = sumValid.getConteudo();
+		logger.trace("Conteúdo da validação do projeto: {}", contValid);
+		logger.trace("Grupo $1: {}", contValid.replaceFirst(EXP_URL_VALIDACAO_PROJETO, "$1"));
+		logger.trace("Grupo $2: {}", contValid.replaceFirst(EXP_URL_VALIDACAO_PROJETO, "$2"));
+		logger.trace("Grupo $3: {}", contValid.replaceFirst(EXP_URL_VALIDACAO_PROJETO, "$3"));
+		logger.trace("Grupo $4: {}", contValid.replaceFirst(EXP_URL_VALIDACAO_PROJETO, "$4"));
+		logger.trace("Grupo $5: {}", contValid.replaceFirst(EXP_URL_VALIDACAO_PROJETO, "$5"));
 		if (contValid.replaceFirst(EXP_URL_VALIDACAO_PROJETO, "$3").equals("")) {
 			sumValid.setConteudo(contValid.replaceFirst(EXP_URL_VALIDACAO_PROJETO,
 					"$1" + PREFIXO_URL_VALIDACAO_PROJETO + sum.getURL() + SUFIXO_URL_VALIDACAO_PROJETO + "$5"));
@@ -204,8 +222,8 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		return gerarSumario(TITULO_PROJETOS + TITULO_DETALHADO, OP_PROJETOS, usu, raiz, grDetProj);
 	}
 
-	public void gerarDetalhamentoProjeto(StringBuffer cont, Projeto proj, String estiloTitulo, String estiloTituloURL,
-			String estiloItem, String estiloItemURL) {
+	public void gerarDetalhamentoProjeto(StringBuffer cont, Projeto proj, String estiloTitulo, String estiloTituloURL, String estiloItem,
+			String estiloItemURL) {
 		gerarInicioLista(cont);
 		// Painel
 		gerarItemURL(cont, "Painel", estiloTituloURL, proj.getURL());
@@ -253,8 +271,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 			temMensagem |= !clMsgs.isEmpty();
 			// Ações
 			GeradorENML<Acao> grTitAcao = (cnt, acao) -> gerarItemURL(cnt, acao, ESTILO_URL_PEQUENO_1);
-			GeradorENML<Acao> grAcao = (cnt, acao) -> gerarListaItens(cnt, acao, grTitAcao,
-					acao.getMensagensValidacao(), grMsgValidPeq);
+			GeradorENML<Acao> grAcao = (cnt, acao) -> gerarListaItens(cnt, acao, grTitAcao, acao.getMensagensValidacao(), grMsgValidPeq);
 			Collection<Acao> clAcoes = new ArrayList<Acao>(proj.getAcoesCalendario());
 			clAcoes.addAll(proj.getAcoesEmFoco());
 			clAcoes.addAll(proj.getAcoesDelegadas());
@@ -264,8 +281,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 			temMensagem |= !clAcoes.isEmpty();
 			// Referências
 			GeradorENML<Referencia> grTitRef = (cnt, ref) -> gerarItemURL(cnt, ref, ESTILO_URL_PEQUENO_1);
-			GeradorENML<Referencia> grRef = (cnt, ref) -> gerarListaItens(cnt, ref, grTitRef,
-					ref.getMensagensValidacao(), grMsgValidPeq);
+			GeradorENML<Referencia> grRef = (cnt, ref) -> gerarListaItens(cnt, ref, grTitRef, ref.getMensagensValidacao(), grMsgValidPeq);
 			Collection<Referencia> clRefs = proj.getReferencias();
 			clRefs.removeIf((Nota nota) -> nota.getMensagensValidacao().isEmpty());
 			gerarListaItens(cont, "Referências", grTitulo, clRefs, grRef);
@@ -295,7 +311,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 	private static final SimpleDateFormat FORMATO_DATA_MES;
 	private static final SimpleDateFormat FORMATO_DATA_DIA;
 	private static final SimpleDateFormat FORMATO_DATA_HORA;
-	
+
 	static {
 		FORMATO_DATA_ANO = new SimpleDateFormat("yyyy");
 		FORMATO_DATA_ANO.setTimeZone(FusoHorario.FORTALEZA);
@@ -304,13 +320,13 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		FORMATO_DATA_DIA = new SimpleDateFormat("EEE, dd");
 		FORMATO_DATA_DIA.setTimeZone(FusoHorario.FORTALEZA);
 		FORMATO_DATA_HORA = new SimpleDateFormat("HH:mm - ");
-		FORMATO_DATA_HORA.setTimeZone(FusoHorario.FORTALEZA);	
+		FORMATO_DATA_HORA.setTimeZone(FusoHorario.FORTALEZA);
 	}
 
 	private final GeradorENML<Acao> grDetAcaoVazio = (cont, acao) -> {
 	};
-	private final GeradorENML<Acao> grDetAcao = (cont, acao) -> gerarDetalhamentoAcao(cont, acao,
-			ESTILO_TEXTO_PEQUENO_1, ESTILO_URL_PEQUENO_1);
+	private final GeradorENML<Acao> grDetAcao = (cont, acao) -> gerarDetalhamentoAcao(cont, acao, ESTILO_TEXTO_PEQUENO_1,
+			ESTILO_URL_PEQUENO_1);
 
 	public Sumario gerarSumarioAcoes(Usuario usu, Collection<Acao> clAcoes) throws ErroCadastro {
 		return gerarSumario(usu, TITULO_ACOES, OP_ACOES, clAcoes, grDetAcaoVazio);
@@ -331,14 +347,13 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 	public Sumario gerarSumarioAcoesCalendario(Usuario usu, Collection<Acao> clAcoes) throws ErroCadastro {
 		StringBuffer cont = new StringBuffer();
 		gerarCabecalho(cont, URL_SUMARIO + OP_ACOES_CALENDARIO);
-		gerarDetalhamentoCalendario(cont, ESTILO_TEXTO, ESTILO_TEXTO_PEQUENO_1, ESTILO_TEXTO_PEQUENO_2,
-				ESTILO_URL_PEQUENO_2, clAcoes);
+		gerarDetalhamentoCalendario(cont, ESTILO_TEXTO, ESTILO_TEXTO_PEQUENO_1, ESTILO_TEXTO_PEQUENO_2, ESTILO_URL_PEQUENO_2, clAcoes);
 		gerarRodape(cont);
 		return gerarSumario(usu, TITULO_SUMARIO + TITULO_ACOES + TITULO_CALENDARIO, true, cont.toString());
 	}
 
-	public void gerarDetalhamentoCalendario(StringBuffer cont, String estiloTitulo, String estiloItemInterm,
-			String estiloItem, String estiloURLItem, Collection<Acao> clAcoes) {
+	public void gerarDetalhamentoCalendario(StringBuffer cont, String estiloTitulo, String estiloItemInterm, String estiloItem,
+			String estiloURLItem, Collection<Acao> clAcoes) {
 		clAcoes.removeIf((acao) -> acao.getDataLembrete() == null);
 		List<Acao> lsAcoes = new ArrayList<Acao>(clAcoes);
 		Collections.sort(lsAcoes, (a, b) -> a.getDataLembrete().compareTo(b.getDataLembrete()));
@@ -397,8 +412,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		GeradorENML<String> grTitulo = (cnt, tit) -> gerarItem(cnt, tit, estiloTitulo);
 		GeradorENML<Interesse> grIntr = (cnt, intr) -> gerarItemURL(cnt, intr, estiloItemURL);
 		Interesse empr = acao.getEmpregador();
-		gerarListaItens(cont, "Interesses", grTitulo, empr != null ? Arrays.asList(empr) : Collections.emptyList(),
-				grIntr);
+		gerarListaItens(cont, "Interesses", grTitulo, empr != null ? Arrays.asList(empr) : Collections.emptyList(), grIntr);
 		// Projetos
 		GeradorENML<Projeto> grProj = (cnt, proj) -> gerarItemURL(cnt, proj, estiloItemURL);
 		gerarListaItens(cont, "Projetos", grTitulo, acao.getProjetos(), grProj);
@@ -417,8 +431,8 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 
 	private final GeradorENML<Referencia> grDetRefVazio = (cont, ref) -> {
 	};
-	private final GeradorENML<Referencia> grDetRef = (cont, acao) -> gerarDetalhamentoReferencia(cont, acao,
-			ESTILO_TEXTO_PEQUENO_1, ESTILO_URL_PEQUENO_1);
+	private final GeradorENML<Referencia> grDetRef = (cont, acao) -> gerarDetalhamentoReferencia(cont, acao, ESTILO_TEXTO_PEQUENO_1,
+			ESTILO_URL_PEQUENO_1);
 
 	public Sumario gerarSumarioReferencias(Usuario usu, Collection<Referencia> clRefs) throws ErroCadastro {
 		return gerarSumario(usu, TITULO_REFERENCIAS, OP_REFERENCIAS, clRefs, grDetRefVazio);
@@ -436,8 +450,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		return gerarSumario(TITULO_REFERENCIAS + TITULO_DETALHADO, OP_REFERENCIAS, usu, raiz, grDetRef);
 	}
 
-	private void gerarDetalhamentoReferencia(StringBuffer cont, Referencia ref, String estiloTitulo,
-			String estiloItemURL) {
+	private void gerarDetalhamentoReferencia(StringBuffer cont, Referencia ref, String estiloTitulo, String estiloItemURL) {
 		gerarInicioLista(cont);
 		// Interesses
 		GeradorENML<String> grTitulo = (cnt, tit) -> gerarItem(cnt, tit, estiloTitulo);
@@ -455,8 +468,8 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 
 	//// SUMÁRIOS GENÉRICOS ////
 
-	public <TipoEnt extends EntidadeEvn<?>> Sumario gerarSumario(Usuario usu, String titulo, String oper,
-			Collection<TipoEnt> clEnts, GeradorENML<TipoEnt> geradorDetalhamentoEnt) throws ErroCadastro {
+	public <TipoEnt extends EntidadeEvn<?>> Sumario gerarSumario(Usuario usu, String titulo, String oper, Collection<TipoEnt> clEnts,
+			GeradorENML<TipoEnt> geradorDetalhamentoEnt) throws ErroCadastro {
 		StringBuffer cont = new StringBuffer();
 		gerarCabecalho(cont, URL_SUMARIO + oper);
 		try {
@@ -473,8 +486,8 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		return gerarSumario(usu, TITULO_SUMARIO + titulo, !titulo.contains(TITULO_DETALHADO), cont.toString());
 	}
 
-	public <TipoEnt extends EntidadeEvn<?>> Sumario gerarSumario(String titulo, String oper, Usuario usu,
-			Grupo<TipoEnt> raiz, GeradorENML<TipoEnt> geradorDetalhamentoEnt) throws ErroCadastro {
+	public <TipoEnt extends EntidadeEvn<?>> Sumario gerarSumario(String titulo, String oper, Usuario usu, Grupo<TipoEnt> raiz,
+			GeradorENML<TipoEnt> geradorDetalhamentoEnt) throws ErroCadastro {
 		StringBuffer cont = new StringBuffer();
 		gerarCabecalho(cont, URL_SUMARIO + oper);
 		try {
@@ -551,8 +564,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 	private final GeradorENML<String> grMsgValid = (cnt, msg) -> gerarItemValid(cnt, msg, ESTILO_TEXTO_PEQUENO_1);
 	private final GeradorENML<String> grMsgValidPeq = (cnt, msg) -> gerarItemValid(cnt, msg, ESTILO_TEXTO_PEQUENO_2);
 
-	private Sumario gerarValidacao(Usuario usu, String titulo, String oper, Collection<? extends Nota> clNotas)
-			throws ErroCadastro {
+	private Sumario gerarValidacao(Usuario usu, String titulo, String oper, Collection<? extends Nota> clNotas) throws ErroCadastro {
 		clNotas.removeIf((Nota nota) -> nota.getMensagensValidacao().isEmpty());
 		StringBuffer cont = new StringBuffer();
 		gerarCabecalho(cont, URL_VALIDACAO + oper);
@@ -581,7 +593,7 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 		FORMATO_DATA_ATUALIZADO = new SimpleDateFormat("dd/MM/yyyy - HH:mm");
 		FORMATO_DATA_ATUALIZADO.setTimeZone(FusoHorario.FORTALEZA);
 	}
-	
+
 	protected void gerarCabecalho(StringBuffer cont, String urlAtualizar) {
 		gerarCabecalho(cont);
 		gerarInicioLinha(cont, ESTILO_LINHA);
@@ -637,12 +649,18 @@ public class CadastroSumario extends CadastroNota<Sumario> {
 
 	public void excluirSumariosInvalidos(Usuario usu) throws ErroCadastro {
 		Collection<Sumario> clSums = consultarTodos(usu);
+		// Elimina sumários antigos e duplicados
 		for (Sumario sum : clSums) {
+			// Testa se é sumário duplicado
+			if (!consultarPorNome(usu, sum.getNome()).getId().equals(sum.getId())) {
+				excluir(usu, sum);
+				continue;
+			}
+			// Testa se é sumário de entidade existente e se o nome é válido
 			String modelo = sum.getNome().replaceFirst(EXP_TITULO, "$3");
 			String chave = sum.getNome().replaceFirst(EXP_TITULO, "$4");
-			// Testa se é sumário de item e se o nome é válido
 			if (!modelo.equals("") && !modelo.equals(sum.getNome())) {
-				CadastroEvn<?, ?> cad = getCadastro(ChavesModelo.NOME_PACOTE + modelo.toUpperCase());
+				CadastroEvn<?, ?> cad = getCadastro(ChavesModelo.PACOTE + "." + modelo.toUpperCase());
 				try {
 					cad.consultarPorNome(usu, chave);
 				} catch (ErroItemNaoEncontrado e) {

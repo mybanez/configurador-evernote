@@ -16,21 +16,19 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
-import com.evernote.edam.error.EDAMSystemException;
-import com.evernote.edam.error.EDAMUserException;
-import com.evernote.thrift.TException;
-
-import meyn.cevn.ClienteEvn;
 import meyn.cevn.ContextoEvn;
 import meyn.cevn.modelo.CadastroNota;
 import meyn.cevn.modelo.ChavesModelo;
+import meyn.cevn.modelo.ClienteEvn;
 import meyn.cevn.modelo.Nota;
 import meyn.cevn.modelo.Usuario;
 import meyn.util.modelo.ErroModelo;
+import meyn.util.modelo.Modelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 import meyn.util.modelo.entidade.FabricaEntidade;
 
+@Modelo(ChavesModelo.LOG)
 public class CadastroLog extends CadastroNota<Nota> {
 
 	// Somente uma instância de appender pode ser referenciada pelos loggers
@@ -41,8 +39,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 
 		@PluginFactory
 		public static AppenderEvn criarAppender(@PluginAttribute("name") String nome,
-				@PluginAttribute("updateInterval") int intervaloAtualizacao,
-				@PluginElement("Filters") final Filter filtro,
+				@PluginAttribute("updateInterval") int intervaloAtualizacao, @PluginElement("Filters") final Filter filtro,
 				@PluginElement("Layout") Layout<? extends Serializable> leiaute,
 				@PluginAttribute("ignoreExceptions") boolean ignorarErros) {
 			try {
@@ -171,37 +168,30 @@ public class CadastroLog extends CadastroNota<Nota> {
 	public Nota gerarLogUsuario(Usuario usu) throws ErroCadastro {
 		Nota log = usu.getLog();
 		try {
-			String logName;
-			if (log == null) {
-				String userName = ClienteEvn.getUserStore(usu).getUser().getUsername();
-				logName = "Log - " + userName + "@" + usu.getId();
-			} else {
-				logName = log.getNome();
-			}
+			String nomeLog = log == null ? "Log - " + ClienteEvn.getNomeUsuario(usu) + "@" + usu.getId() : log.getNome();
 			try {
-				log = consultarPorNome(usu, logName);
+				log = consultarPorNome(usu, nomeLog);
+				getLogger().debug("log recuperado: {}", nomeLog);
 			} catch (ErroItemNaoEncontrado e) {
 				log = FabricaEntidade.getInstancia(Nota.class);
-				log.setNome(logName);
+				log.setNome(nomeLog);
 				log.setLembrete(false);
 				gerarMensagemInativo(log);
-				incluir(usu, log);
-				usu.setLog(log);
+				log = incluir(usu, log);
 			}
-		} catch (EDAMUserException | EDAMSystemException | TException e) {
+		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro gerando log do usuário", e);
 		}
 		return log;
 	}
 
 	public void excluirLogsAntigos(Usuario usu) throws ErroCadastro {
-		Collection<Nota> clLogs = consultarPorFiltro(usu,
-				(log) -> log.getNome().startsWith("Log") && !log.getNome().contains(usu.getId()));
+		Collection<Nota> clLogs = consultarPorFiltro(usu, (log) -> log.getNome().startsWith("Log") && !log.getNome().contains(usu.getId()));
 		for (Nota log : clLogs) {
 			excluir(usu, log);
 		}
 	}
-	
+
 	//// GERAÇÃO DE ENML ////
 
 	static final String TEXT_STYLE = "font-family: Courier New; font-size: 10pt;";

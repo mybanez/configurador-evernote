@@ -18,9 +18,11 @@ import meyn.cevn.modelo.referencia.CadastroReferencia;
 import meyn.cevn.modelo.referencia.Referencia;
 import meyn.cevn.modelo.sumario.CadastroSumario;
 import meyn.util.modelo.ErroModelo;
+import meyn.util.modelo.Modelo;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
+@Modelo(ChavesModelo.INTERESSE)
 public class CadastroInteresse extends CadastroEtiqueta<Interesse> {
 	private static final String REPOSITORIO = "<1. Interesse>";
 
@@ -53,7 +55,7 @@ public class CadastroInteresse extends CadastroEtiqueta<Interesse> {
 		try {
 			intr.setSumario(cadSum.consultarPorInteresse(usu, intr));		
 		} catch (ErroItemNaoEncontrado e) {
-			intr.setSumario(cadSum.gerarSumarioInteresse(usu, intr));	
+			getLogger().warn("Sumário não encontrado: {}", intr.getNome());
 		}
 	}
 }

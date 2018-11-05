@@ -165,12 +165,13 @@
 					<h:panelGroup style="width: 100%;">Última execução: <h:outputText
 							id="tempo" value="#{console.tempoProcessamento}" />
 					</h:panelGroup>
-					<h:panelGroup style="width: 100%;"
-						rendered="${empty param.sumario ? true : false}">
-						<p:commandButton style="font-size: 9pt;" async="true"
-							process="@this" update="paineis:console"
-							actionListener="#{console.limparSaida}" id="btLimpar"
-							value="Limpar" />
+					<h:panelGroup style="width: 100%;">
+						<p:commandButton style="font-size: 9pt;"
+							onstart="mostrarImagemProcessando(true)"
+							oncomplete="mostrarImagemProcessando(false)" async="true"
+							rendered="${empty param.sumario ? true : false}" process="@this"
+							update="paineis:console" actionListener="#{console.limparSaida}"
+							id="btLimpar" value="Limpar" />
 					</h:panelGroup>
 					<h:panelGroup style="width: 100%;">
 						<h:outputLink class="ui-link-cevn-2" value="#{console.urlLog}">Log da sessão</h:outputLink>
@@ -207,10 +208,11 @@
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="sumarios">
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton async="true" process="@this"
-						update="paineis:sumarios" action="#{console.recarregarEntidade}"
-						value="Recarregar" style="font-size: 10pt;" id="btRecarregarSums">
-						<f:param name="modelo" value="sumario" />
+					<p:commandButton onstart="mostrarImagemProcessando(true)"
+						oncomplete="mostrarImagemProcessando(false)" async="true"
+						process="@this" update="paineis:sumarios" value="Recarregar"
+						style="font-size: 10pt;" id="btRecarregarSums">
+						<f:param name="forcarConsistencia" value="true" />
 					</p:commandButton>
 					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
 						process="@this" update="paineis:console"
@@ -222,9 +224,9 @@
 					paginator="true" emptyMessage="Lista de sumários vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
 					rowsPerPageTemplate="10,15,25,50,100">
-					<p:column filterBy="#{sum.dataCriacaoFmt}" filterMatchMode="contains"
-						headerText="Criação" style="width: 16%;"
-						sortBy="#{sum.dataCriacao}">
+					<p:column filterBy="#{sum.dataCriacaoFmt}"
+						filterMatchMode="contains" headerText="Criação"
+						style="width: 16%;" sortBy="#{sum.dataCriacao}">
 						<h:outputText value="#{sum.dataCriacaoFmt}" />
 					</p:column>
 					<p:column filterBy="#{sum.dataAlteracaoFmt}"
@@ -248,10 +250,11 @@
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="interesses">
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton async="true" process="@this"
-						update="paineis:interesses" action="#{console.recarregarEntidade}"
-						value="Recarregar" style="font-size: 10pt;" id="btRecarregarIntrs">
-						<f:param name="modelo" value="interesse" />
+					<p:commandButton onstart="mostrarImagemProcessando(true)"
+						oncomplete="mostrarImagemProcessando(false)" async="true"
+						process="@this" update="paineis:interesses" value="Recarregar"
+						style="font-size: 10pt;" id="btRecarregarIntrs">
+						<f:param name="forcarConsistencia" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="intr" value="#{console.interesses}"
@@ -276,10 +279,11 @@
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="projetos">
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton async="true" process="@this"
-						update="paineis:projetos" action="#{console.recarregarEntidade}"
-						value="Recarregar" style="font-size: 10pt;" id="btRecarregarProjs">
-						<f:param name="modelo" value="projeto" />
+					<p:commandButton onstart="mostrarImagemProcessando(true)"
+						oncomplete="mostrarImagemProcessando(false)" async="true"
+						process="@this" update="paineis:projetos" value="Recarregar"
+						style="font-size: 10pt;" id="btRecarregarProjs">
+						<f:param name="forcarConsistencia" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="proj" value="#{console.projetos}"
@@ -302,10 +306,11 @@
 		<p:tab title="Ações" rendered="${empty param.sumario ? true : false}">
 			<h:form id="acoes">
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton async="true" process="@this"
-						update="paineis:acoes" action="#{console.recarregarEntidade}"
-						value="Recarregar" style="font-size: 10pt;" id="btRecarregarAcoes">
-						<f:param name="modelo" value="acao" />
+					<p:commandButton onstart="mostrarImagemProcessando(true)"
+						oncomplete="mostrarImagemProcessando(false)" async="true"
+						process="@this" update="paineis:acoes" value="Recarregar"
+						style="font-size: 10pt;" id="btRecarregarAcoes">
+						<f:param name="forcarConsistencia" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="acao" value="#{console.acoes}"
@@ -329,11 +334,11 @@
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="referencias">
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton async="true" process="@this"
-						update="paineis:referencias"
-						action="#{console.recarregarEntidade}" value="Recarregar"
+					<p:commandButton onstart="mostrarImagemProcessando(true)"
+						oncomplete="mostrarImagemProcessando(false)" async="true"
+						process="@this" update="paineis:referencias" value="Recarregar"
 						style="font-size: 10pt;" id="btRecarregarRefs">
-						<f:param name="modelo" value="referencia" />
+						<f:param name="forcarConsistencia" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="ref" value="#{console.referencias}"
