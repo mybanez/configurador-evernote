@@ -10,13 +10,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /*
- * Necessária para garantir persistência de atributos 
- * alterados da sessão por parte do Google App Engine
+ * NecessÃ¡ria para garantir persistÃªncia de atributos 
+ * alterados da sessÃ£o por parte do Google App Engine
  */
 @SuppressWarnings("serial")
 public class MarcadorSessaoGAE implements PhaseListener {
-	Logger logger = LogManager.getLogger(getClass());
-	
+	Logger logger = LogManager.getLogger();
+
 	@Override
 	public void afterPhase(PhaseEvent event) {
 		Map<String, Object> mpAtribs = event.getFacesContext().getExternalContext().getSessionMap();

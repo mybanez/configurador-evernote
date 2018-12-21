@@ -31,7 +31,7 @@ import meyn.util.modelo.entidade.FabricaEntidade;
 @Modelo(ChavesModelo.LOG)
 public class CadastroLog extends CadastroNota<Nota> {
 
-	// Somente uma inst‚ncia de appender pode ser referenciada pelos loggers
+	// Somente uma inst√¢ncia de appender pode ser referenciada pelos loggers
 	@Plugin(name = "Evernote", category = "Core", elementType = "appender", printObject = true)
 	private static final class AppenderEvn extends AbstractAppender {
 
@@ -39,12 +39,12 @@ public class CadastroLog extends CadastroNota<Nota> {
 
 		@PluginFactory
 		public static AppenderEvn criarAppender(@PluginAttribute("name") String nome,
-				@PluginAttribute("updateInterval") int intervaloAtualizacao, @PluginElement("Filters") final Filter filtro,
-				@PluginElement("Layout") Layout<? extends Serializable> leiaute,
-				@PluginAttribute("ignoreExceptions") boolean ignorarErros) {
+		        @PluginAttribute("updateInterval") int intervaloAtualizacao, @PluginElement("Filters") final Filter filtro,
+		        @PluginElement("Layout") Layout<? extends Serializable> leiaute,
+		        @PluginAttribute("ignoreExceptions") boolean ignorarErros) {
 			try {
 				if (nome == null) {
-					LOGGER.error("Nome n„o fornecido para AppenderEvn");
+					LOGGER.error("Nome n√£o fornecido para AppenderEvn");
 					return null;
 				}
 				if (leiaute == null) {
@@ -75,10 +75,10 @@ public class CadastroLog extends CadastroNota<Nota> {
 			}
 
 			void append(byte[] bytes) {
-				// Garante que uma linha seja gerada de forma atÙmica
+				// Garante que uma linha seja gerada de forma at√¥mica
 				synchronized (conteudoLog) {
 					cadLog.gerarInicioLinha(conteudoLog);
-					cadLog.gerarTexto(conteudoLog, new String(bytes), TEXT_STYLE);
+					cadLog.gerarTextoMultilinha(conteudoLog, new String(bytes), TEXT_STYLE);
 					cadLog.gerarFimLinha(conteudoLog);
 					logAtualizado = true;
 				}
@@ -89,7 +89,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 				ThreadContext.put("usuario", usu.getId());
 				try {
 					Nota log = usu.getLog();
-					// N„o faz nada se o log n„o tiver sido criado
+					// N√£o faz nada se o log n√£o tiver sido criado
 					if (log != null) {
 						cadLog.getLogger().debug("Thread do appender iniciado: {}", log.getNome());
 						while (logAtivo) {
@@ -110,7 +110,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 					}
 					MP_THREADS.remove(usu.getId());
 				} catch (Exception e) {
-					cadLog.getLogger().error("Processo de atualizaÁ„o do log abortado. Usuario: {}", usu, e);
+					cadLog.getLogger().error("Processo de atualiza√ß√£o do log abortado. Usuario: {}", usu, e);
 				}
 			}
 
@@ -123,7 +123,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 		private final int intervaloAtualizacao;
 
 		public AppenderEvn(String nome, int intervaloAtualizacao, Filter filtro, Layout<? extends Serializable> leiaute,
-				boolean ignorarErros) throws ErroModelo {
+		        boolean ignorarErros) throws ErroModelo {
 			super(nome, filtro, leiaute, ignorarErros);
 			this.cadLog = getCadastro(ChavesModelo.LOG);
 			this.intervaloAtualizacao = intervaloAtualizacao;
@@ -139,7 +139,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 					synchronized (MP_THREADS) {
 						thr = MP_THREADS.get(idUsu);
 						if (thr == null) {
-							// Pode gerar erro se houver chamada antes da criaÁ„o do contexto Evn
+							// Pode gerar erro se houver chamada antes da cria√ß√£o do contexto Evn
 							thr = new ProcessoAtualizacao(ContextoEvn.getContexto(idUsu).getUsuario());
 						}
 					}
@@ -164,7 +164,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 		super(REPOSITORIO, false, false);
 	}
 
-	// Recria o log se ele for excluÌdo durante sess„o ativa
+	// Gera o log da sess√£o ativa
 	public Nota gerarLogUsuario(Usuario usu) throws ErroCadastro {
 		Nota log = usu.getLog();
 		try {
@@ -180,7 +180,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 				log = incluir(usu, log);
 			}
 		} catch (ErroModelo e) {
-			throw new ErroCadastro("Erro gerando log do usu·rio", e);
+			throw new ErroCadastro("Erro gerando log do usu√°rio", e);
 		}
 		return log;
 	}
@@ -192,14 +192,14 @@ public class CadastroLog extends CadastroNota<Nota> {
 		}
 	}
 
-	//// GERA«√O DE ENML ////
+	//// GERA√á√ÉO DE ENML ////
 
 	static final String TEXT_STYLE = "font-family: Courier New; font-size: 10pt;";
 
 	private void gerarMensagemInativo(Nota log) {
 		StringBuffer cont = new StringBuffer();
 		gerarCabecalho(cont);
-		gerarTexto(cont, "Nenhuma informaÁ„o registrada. Verificar configuraÁ„o LOG4J!", TEXT_STYLE);
+		gerarTexto(cont, "Nenhuma informa√ß√£o registrada. Verificar configura√ß√£o LOG4J!", TEXT_STYLE);
 		gerarRodape(cont);
 		log.setConteudo(cont.toString());
 	}

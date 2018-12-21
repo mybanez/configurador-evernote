@@ -40,22 +40,22 @@ public class CadastroInteresse extends CadastroEtiqueta<Interesse> {
 		// Projetos
 		CadastroProjeto cadProj = getCadastro(ChavesModelo.PROJETO);
 		intr.setProjetos(cadProj.consultarPorFiltro(usu, (Predicate<Projeto>) ehDoInteresse));
-		// Ações
+		// AÃ§Ãµes
 		if (consultarPorRepositorio(usu, "<Empregador>").contains(intr)) {
 			CadastroAcao cadAcao = getCadastro(ChavesModelo.ACAO);
 			intr.setAcoes(cadAcao.consultarPorFiltro(usu, (Predicate<Acao>) ehDoInteresse));
 		} else {
 			intr.setAcoes(Collections.<Acao>emptyList());
 		}
-		// Referências
+		// ReferÃªncias
 		CadastroReferencia cadRef = getCadastro(ChavesModelo.REFERENCIA);
 		intr.setReferencias(cadRef.consultarPorFiltro(usu, (Predicate<Referencia>) ehDoInteresse));
-		// Sumário
+		// SumÃ¡rio
 		CadastroSumario cadSum = getCadastro(ChavesModelo.SUMARIO);
 		try {
-			intr.setSumario(cadSum.consultarPorInteresse(usu, intr));		
+			intr.setSumario(cadSum.consultarPorInteresse(usu, intr));
 		} catch (ErroItemNaoEncontrado e) {
-			getLogger().warn("Sumário não encontrado: {}", intr.getNome());
+			getLogger().warn("SumÃ¡rio nÃ£o encontrado: {}", intr.getNome());
 		}
 	}
 }

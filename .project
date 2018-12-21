@@ -3,6 +3,7 @@
 	<name>ConfiguradorEvernote</name>
 	<comment></comment>
 	<projects>
+		<project>UtilJEE</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

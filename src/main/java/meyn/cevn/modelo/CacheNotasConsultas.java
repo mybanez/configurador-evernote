@@ -84,13 +84,11 @@ public class CacheNotasConsultas extends CacheEntidadesConsultas {
 				put(chave, infoConsultaNotas.criarCache(getContexto()));
 			}
 			CacheNotas<Nota> cacheNotas = (CacheNotas<Nota>) get(chave);
-			boolean emValidacao = cacheNotas.isValidarEntidades();
-			if (!cacheNotas.isAtualizado() || emValidacao) {
+			// Para garantir consistência, assume cenário de console única
+			if (!cacheNotas.isAtualizado()) {
 				cacheNotas.clear();
-				cacheNotas.setAtualizado(true);
-				cacheNotas.setValidarEntidades(false);
 				List<NoteMetadata> lsMtds = ClienteEvn.consultarNotas(usu, infoConsultaNotas.getFiltro(), infoConsultaNotas.getCampos());
-				if (emValidacao) {
+				if (cacheNotas.isValidarEntidades()) {
 					for (NoteMetadata mtd : lsMtds) {
 						Nota nota = FabricaEntidade.getInstancia(infoConsultaNotas.getTipoEntidade());
 						nota.setMensagensValidacao(new ArrayList<String>());
@@ -109,7 +107,10 @@ public class CacheNotasConsultas extends CacheEntidadesConsultas {
 						cacheNotas.put(mtd.getGuid(), nota);
 					}
 				}
-				if (emValidacao) {
+				// Status deve mudar antes de carregar relacionamentos para não gerar
+				// atualização recursiva
+				cacheNotas.setAtualizado(true);
+				if (cacheNotas.isValidarEntidades()) {
 					for (Nota nota : cacheNotas.values()) {
 						try {
 							infoConsultaNotas.getIniciadorPropsRelEnt().executar(usu, nota.getMetadado(), nota);
@@ -122,6 +123,7 @@ public class CacheNotasConsultas extends CacheEntidadesConsultas {
 						infoConsultaNotas.getIniciadorPropsRelEnt().executar(usu, nota.getMetadado(), nota);
 					}
 				}
+				cacheNotas.setValidarEntidades(false);
 				cacheNotas.getLogger().debug("atualizado");
 			}
 			return cacheNotas;

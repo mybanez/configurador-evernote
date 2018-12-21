@@ -20,10 +20,10 @@ public class Grupo<TipoEnt extends EntidadeEvn<?>> {
 		setNome(nome);
 		this.ent = ent;
 		stGrpsFilhos = new TreeSet<Grupo<TipoEnt>>((a, b) -> a.getNome().compareTo(b.getNome()));
-		//Viabiliza nomes iguais no conjunto
+		// Viabiliza nomes iguais no conjunto
 		stEntsFilho = new TreeSet<TipoEnt>((a, b) -> {
 			int comp = a.getNome().compareTo(b.getNome());
-			return comp != 0 ? comp : 1; 
+			return comp != 0 ? comp : 1;
 		});
 	}
 

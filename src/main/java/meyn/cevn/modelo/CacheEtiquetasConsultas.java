@@ -54,14 +54,12 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 				put(chave, infoConsultaEtqs.criarCache(getContexto()));
 			}
 			CacheEtiquetas<Etiqueta> cacheEtqs = (CacheEtiquetas<Etiqueta>) get(chave);
-			boolean emValidacao = cacheEtqs.isValidarEntidades();
-			if (!cacheEtqs.isAtualizado() || emValidacao) {
+			// Para garantir consistência, assume cenário de console única
+			if (!cacheEtqs.isAtualizado()) {
 				cacheEtqs.clear();
-				cacheEtqs.setAtualizado(true);
-				cacheEtqs.setValidarEntidades(false);
 				CacheTags cacheTag = CacheTags.getCache(usu);
 				List<Tag> lsTags = cacheTag.consultarPorRepositorio(infoConsultaEtqs.getNomeRepositorio());
-				if (emValidacao) {
+				if (cacheEtqs.isValidarEntidades()) {
 					for (Tag tag : lsTags) {
 						Etiqueta etq = FabricaEntidade.getInstancia(infoConsultaEtqs.getTipoEntidade());
 						etq.setMensagensValidacao(new ArrayList<String>());
@@ -80,7 +78,10 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 						cacheEtqs.put(tag.getGuid(), etq);
 					}
 				}
-				if (emValidacao) {
+				// Status deve mudar antes de carregar relacionamentos para não gerar
+				// atualização recursiva
+				cacheEtqs.setAtualizado(true);
+				if (cacheEtqs.isValidarEntidades()) {
 					for (Etiqueta etq : cacheEtqs.values()) {
 						try {
 							infoConsultaEtqs.getIniciadorPropsRelEnt().executar(usu, etq.getMetadado(), etq);
@@ -93,6 +94,7 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 						infoConsultaEtqs.getIniciadorPropsRelEnt().executar(usu, etq.getMetadado(), etq);
 					}
 				}
+				cacheEtqs.setValidarEntidades(false);
 				cacheEtqs.getLogger().debug("atualizado");
 			}
 			return cacheEtqs;

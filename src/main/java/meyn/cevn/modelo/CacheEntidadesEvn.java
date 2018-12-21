@@ -14,11 +14,12 @@ import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
 @SuppressWarnings("serial")
 abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEvn<String, TipoEnt> {
-	
+
 	private class CachePorNome extends Cache<String, TipoEnt> {
 		CachePorNome() {
 			setLogger(CacheEntidadesEvn.this.getLogger());
 		}
+
 		void put(TipoEnt ent) {
 			put(ent.getNome(), ent);
 		}
@@ -33,7 +34,7 @@ abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEv
 	public TipoEnt put(String id, TipoEnt ent) {
 		if (cacheNome.containsKey(ent.getNome())) {
 			getLogger().warn("Entidade duplicada: {}", ent.getNome());
-		}		
+		}
 		cacheNome.put(ent);
 		return super.put(id, ent);
 	}
@@ -44,16 +45,12 @@ abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEv
 		cacheNome.clear();
 	}
 
+	// Necessário para dar visibilidade para outras classes no pacote
 	@Override
 	protected Logger getLogger() {
 		return super.getLogger();
-	}	
-	
-	@Override
-	protected void setLogger(Logger logger) {
-		super.setLogger(logger);
 	}
-	
+
 	protected String getChave() {
 		return chave;
 	}
@@ -74,13 +71,17 @@ abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEv
 		return entidadeValidavel && validarEntidades;
 	}
 
+	// Para garantir consistência, assume cenário de console única
 	protected void setValidarEntidades(boolean validarEntidades) {
 		this.validarEntidades = validarEntidades;
+		if (validarEntidades) {
+			getLogger().debug("validação de entidades");
+		}
 	}
-	
+
 	protected Collection<TipoEnt> consultarTodos() throws ErroModelo {
 		List<TipoEnt> lsEnts = new ArrayList<TipoEnt>(values());
-		Collections.sort(lsEnts, (a,b) -> a.getNome().compareTo(b.getNome()));
+		Collections.sort(lsEnts, (a, b) -> a.getNome().compareTo(b.getNome()));
 		return lsEnts;
 	}
 
@@ -91,7 +92,7 @@ abstract class CacheEntidadesEvn<TipoEnt extends EntidadeEvn<?>> extends CacheEv
 	protected Collection<TipoEnt> consultarPorFiltro(Predicate<TipoEnt> filtro) throws ErroModelo {
 		List<TipoEnt> lsEnts = new ArrayList<TipoEnt>(values());
 		lsEnts.removeIf(filtro.negate());
-		Collections.sort(lsEnts, (a,b) -> a.getNome().compareTo(b.getNome()));
+		Collections.sort(lsEnts, (a, b) -> a.getNome().compareTo(b.getNome()));
 		return lsEnts;
 	}
 

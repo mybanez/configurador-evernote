@@ -9,14 +9,20 @@ import meyn.cevn.modelo.referencia.Referencia;
 import meyn.cevn.modelo.sumario.Sumario;
 
 public interface Interesse extends Etiqueta {
-	
+
 	Collection<Projeto> getProjetos();
+
 	void setProjetos(Collection<Projeto> clProjs);
+
 	Collection<Acao> getAcoes();
+
 	void setAcoes(Collection<Acao> clAcoes);
+
 	Collection<Referencia> getReferencias();
-	void setReferencias(Collection<Referencia> clReferencias);	
-	
+
+	void setReferencias(Collection<Referencia> clReferencias);
+
 	Sumario getSumario();
+
 	void setSumario(Sumario sum);
 }

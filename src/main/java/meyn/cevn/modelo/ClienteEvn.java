@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 import com.evernote.auth.EvernoteAuth;
+import com.evernote.auth.EvernoteService;
 import com.evernote.clients.ClientFactory;
 import com.evernote.clients.NoteStoreClient;
 import com.evernote.clients.UserStoreClient;
@@ -31,20 +32,22 @@ import meyn.cevn.ContextoEvn;
 import meyn.util.modelo.ErroModelo;
 
 public final class ClienteEvn {
-	public static final String ATU_TAGS = "TAG";
-	public static final String ATU_NOTEBOOKS = "NTB";
+
+	public static final String TAGS = "TAG";
+	public static final String NOTEBOOKS = "NTB";
+
+	private static final String AUTH_TOKEN_SAND_BOX = "S=s1:U=93be0:E=1683a17eb9d:C=160e266bcc0:P=1cd:A=en-devtoken:V=2:H=a12125d6ec082e623c91bcc59f25de88";
+	private static final String AUTH_TOKEN_PROD = "S=s202:U=187f3ba:E=168dde82bfd:C=1618636fc70:P=1cd:A=en-devtoken:V=2:H=cb717752d1b131b749b1d63ef31e8109";
 
 	private static final String USER_STORE_CLIENT = "USER_STORE";
 	private static final String NOTE_STORE_CLIENT = "NOTE_STORE";
 	private static final SyncChunkFilter SYNC_FILTER = new SyncChunkFilter();
 
-	private static String URL;
-
 	static {
-		SYNC_FILTER.setIncludeNotes(true);
-		SYNC_FILTER.setIncludeNoteAttributes(true);
 		SYNC_FILTER.setIncludeTags(true);
 		SYNC_FILTER.setIncludeNotebooks(true);
+		SYNC_FILTER.setIncludeNotes(true);
+		SYNC_FILTER.setIncludeNoteAttributes(true);
 	}
 
 	private static UserStoreClient getUserStore(Usuario usu) {
@@ -64,34 +67,30 @@ public final class ClienteEvn {
 		ContextoEvn.getContextoLocal(usu).put(NOTE_STORE_CLIENT, nsc);
 	}
 
-	public static String getURL() {
-		return URL;
-	}
-
-	public static void setURL(String URL) {
-		ClienteEvn.URL = URL;
-	}
-
 	public static String getNomeUsuario(Usuario usu) throws ErroModelo {
 		try {
 			return getUserStore(usu).getUser().getUsername();
 		} catch (EDAMUserException | EDAMSystemException | TException e) {
-			throw new ErroModelo("Erro obtendo nome do usu·rio", e);
+			throw new ErroModelo("Erro obtendo nome do usu√°rio", e);
 		}
 	}
-	
+
 	public static boolean isConectado(Usuario usu) {
 		return ContextoEvn.getContexto(usu).containsKey(USER_STORE_CLIENT);
 	}
 
 	public static void conectar(Usuario usu) throws ErroModelo {
 		try {
+			// usu.setEvernoteService(EvernoteService.SANDBOX);
+			// usu.setToken(AUTH_TOKEN_SAND_BOX);
+			usu.setEvernoteService(EvernoteService.PRODUCTION);
+			usu.setToken(AUTH_TOKEN_PROD);
 			// Set up the UserStore client and check that we can speak to the server
 			EvernoteAuth evernoteAuth = new EvernoteAuth(usu.getEvernoteService(), usu.getToken());
 			ClientFactory factory = new ClientFactory(evernoteAuth);
 			UserStoreClient userStore = factory.createUserStoreClient();
 			if (!userStore.checkVersion("CEVN", Constants.EDAM_VERSION_MAJOR, Constants.EDAM_VERSION_MINOR)) {
-				throw new ErroModelo("Vers„o de protocolo do cliente Evernote incompatÌvel");
+				throw new ErroModelo("Vers√£o de protocolo do cliente Evernote incompat√≠vel");
 			}
 			User user = userStore.getUser();
 			setUserStore(usu, userStore);
@@ -100,7 +99,7 @@ public final class ClienteEvn {
 			usu.setPrefixoURL("evernote:///view/" + user.getId() + "/" + user.getShardId() + "/");
 			usu.setContadorAtualizacao(0);
 		} catch (TException | EDAMUserException | EDAMSystemException e) {
-			throw new ErroModelo("Erro conectando ao servidor. Usu·rio: " + usu, e);
+			throw new ErroModelo("Erro conectando ao servidor. Usu√°rio: " + usu, e);
 		}
 	}
 
@@ -113,8 +112,8 @@ public final class ClienteEvn {
 			int contadorBase = usu.getContadorAtualizacao();
 			boolean primeiraAtualizacao = contadorBase == 0;
 			if (primeiraAtualizacao) {
-				clIdsAtu.add(ATU_TAGS);
-				clIdsAtu.add(ATU_NOTEBOOKS);
+				clIdsAtu.add(TAGS);
+				clIdsAtu.add(NOTEBOOKS);
 				clIdsAtu.addAll(clIdsNtbk);
 			}
 			synchronized (noteStore) {
@@ -127,10 +126,10 @@ public final class ClienteEvn {
 						syncChunk = noteStore.getFilteredSyncChunk(contadorBase, 100, SYNC_FILTER);
 					}
 					if (syncChunk.isSetTags()) {
-						clIdsAtu.add(ATU_TAGS);
+						clIdsAtu.add(TAGS);
 					}
 					if (syncChunk.isSetNotebooks()) {
-						clIdsAtu.add(ATU_NOTEBOOKS);
+						clIdsAtu.add(NOTEBOOKS);
 					}
 					if (syncChunk.isSetNotes()) {
 						for (Note note : syncChunk.getNotes()) {
@@ -149,7 +148,7 @@ public final class ClienteEvn {
 			}
 			return clIdsAtu;
 		} catch (EDAMUserException | EDAMSystemException | TException e) {
-			throw new ErroModelo("Erro consultando atualizaÁıes no servidor", e);
+			throw new ErroModelo("Erro consultando atualiza√ß√µes no servidor", e);
 		}
 	}
 

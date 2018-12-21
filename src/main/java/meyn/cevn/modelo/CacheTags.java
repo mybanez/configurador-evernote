@@ -33,7 +33,7 @@ public class CacheTags extends CacheEvn<String, Tag> {
 			throw new ErroModelo("Erro carregando cache de tags", e);
 		}
 	}
-	
+
 	private class CachePorRepositorio extends Cache<String, List<Tag>> {
 		CachePorRepositorio(Usuario usu) throws ErroModelo {
 			for (Tag tag : new HashSet<Tag>(CacheTags.this.values())) {

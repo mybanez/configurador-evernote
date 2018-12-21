@@ -1,6 +1,9 @@
 package meyn.cevn.modelo;
 
+import java.util.ArrayList;
 import java.util.Collection;
+
+import com.evernote.edam.type.Notebook;
 
 import meyn.cevn.modelo.acao.Acao;
 import meyn.cevn.modelo.acao.CadastroAcao;
@@ -18,46 +21,95 @@ import meyn.util.modelo.FachadaModeloImpl;
 
 public class Fachada extends FachadaModeloImpl {
 
-	@FunctionalInterface
-	public static interface GeradorSumarios {
-		void executar(Usuario usu) throws ErroModelo;
+	protected CadastroSumario getCadastroSumario() throws ErroModelo {
+		return (CadastroSumario) Fachada.<Usuario, Sumario>getCadastro(ChavesModelo.SUMARIO);
 	}
 
 	protected CadastroInteresse getCadastroInteresse() throws ErroModelo {
-		return (CadastroInteresse) FachadaModeloImpl.<Usuario, Interesse>getCadastro(ChavesModelo.INTERESSE);
+		return (CadastroInteresse) Fachada.<Usuario, Interesse>getCadastro(ChavesModelo.INTERESSE);
 	}
 
 	protected CadastroProjeto getCadastroProjeto() throws ErroModelo {
-		return (CadastroProjeto) FachadaModeloImpl.<Usuario, Projeto>getCadastro(ChavesModelo.PROJETO);
+		return (CadastroProjeto) Fachada.<Usuario, Projeto>getCadastro(ChavesModelo.PROJETO);
 	}
 
 	protected CadastroAcao getCadastroAcao() throws ErroModelo {
-		return (CadastroAcao) FachadaModeloImpl.<Usuario, Acao>getCadastro(ChavesModelo.ACAO);
+		return (CadastroAcao) Fachada.<Usuario, Acao>getCadastro(ChavesModelo.ACAO);
 	}
 
 	protected CadastroReferencia getCadastroReferencia() throws ErroModelo {
-		return (CadastroReferencia) FachadaModeloImpl.<Usuario, Referencia>getCadastro(ChavesModelo.REFERENCIA);
-	}
-
-	protected CadastroSumario getCadastroSumario() throws ErroModelo {
-		return (CadastroSumario) Fachada.<Usuario, Sumario>getCadastro(ChavesModelo.SUMARIO);
+		return (CadastroReferencia) Fachada.<Usuario, Referencia>getCadastro(ChavesModelo.REFERENCIA);
 	}
 
 	protected CadastroLog getCadastroLog() throws ErroModelo {
 		return (CadastroLog) Fachada.<Usuario, Nota>getCadastro(ChavesModelo.LOG);
 	}
-	
-	@SuppressWarnings("rawtypes")
-	public String consultarRepositorio(String modelo) throws ErroModelo {
-		return ((CadastroEvn) getCadastro(modelo)).getNomeRepositorio();
-	}
-	
-	@SuppressWarnings("rawtypes")
-	public void invalidarCache(Usuario usu, String modelo) throws ErroModelo {
-		((CadastroEvn) getCadastro(modelo)).invalidarCache(usu);
+
+	public void conectar(Usuario usu) throws ErroModelo {
+		if (!ClienteEvn.isConectado(usu)) {
+			ClienteEvn.conectar(usu);
+			// Para evitar duplica√ß√µes, s√≥ gera log para novas sess√µes
+			usu.setLog(getCadastroLog().gerarLogUsuario(usu));
+		}
 	}
 
-	//// SUM¡RIOS ////
+	public void verificarAtualizacoesServidor(Usuario usu) throws ErroModelo {
+		CacheTags cacheTag = CacheTags.getCache(usu);
+		CacheNotebooks cacheNtb = CacheNotebooks.getCache(usu);
+
+		Collection<String> clRepos = new ArrayList<String>();
+		clRepos.add(getCadastroSumario().getNomeRepositorio());
+		clRepos.add(getCadastroProjeto().getNomeRepositorio());
+		clRepos.add(getCadastroAcao().getNomeRepositorio());
+		clRepos.add(getCadastroReferencia().getNomeRepositorio());
+		clRepos.add(getCadastroLog().getNomeRepositorio());
+
+		Collection<String> clIds = new ArrayList<String>();
+		for (String nomeRepo : clRepos) {
+			Notebook ntb = cacheNtb.get(nomeRepo);
+			if (ntb != null) {
+				clIds.add(ntb.getGuid());
+			} else {
+				for (Notebook ntbPilha : cacheNtb.consultarPorPilha(nomeRepo)) {
+					clIds.add(ntbPilha.getGuid());
+				}
+			}
+		}
+
+		Collection<String> clIdsAtu = ClienteEvn.consultarAtualizacoes(usu, clIds);
+		if (clIdsAtu.contains(ClienteEvn.TAGS)) {
+			clIdsAtu.remove(ClienteEvn.TAGS);
+			cacheTag.desatualizar();
+			desatualizarCaches(usu);
+			logger.debug("atualizar Tags");
+		}
+		if (clIdsAtu.contains(ClienteEvn.NOTEBOOKS)) {
+			clIdsAtu.remove(ClienteEvn.NOTEBOOKS);
+			cacheNtb.desatualizar();
+			desatualizarCaches(usu);
+			logger.debug("atualizar Notebooks");
+		}
+		String idLog = cacheNtb.get(getCadastroLog().getNomeRepositorio()).getGuid();
+		if (clIdsAtu.contains(idLog)) {
+			clIdsAtu.remove(idLog);
+			getCadastroLog().desatualizarCache(usu);
+			logger.debug("atualizar Logs");
+		}
+		if (clIdsAtu.size() > 0) {
+			desatualizarCaches(usu);
+			logger.debug("atualizar Entidades");
+		}
+	}
+
+	public void desatualizarCaches(Usuario usu) throws ErroModelo {
+		CadastroEvn.desatualizarCaches(usu);
+	}
+
+	//// SUM√ÅRIOS ////
+
+	public Collection<Sumario> consultarSumariosInvalidos(Usuario usu) throws ErroModelo {
+		return getCadastroSumario().consultarSumariosInvalidos(usu);
+	}
 
 	public void gerarSumarioInteresses(Usuario usu) throws ErroModelo {
 		CadastroSumario cadSum = getCadastroSumario();
@@ -88,7 +140,7 @@ public class Fachada extends FachadaModeloImpl {
 	public Sumario gerarSumarioInicialProjeto(Usuario usu, String id) throws ErroModelo {
 		return getCadastroSumario().gerarSumarioInicialProjeto(usu, getCadastroProjeto().consultarPorChavePrimaria(usu, id));
 	}
-	
+
 	public Sumario gerarSumarioProjeto(Usuario usu, String id) throws ErroModelo {
 		return getCadastroSumario().gerarSumarioProjeto(usu, getCadastroProjeto().consultarPorChavePrimaria(usu, id));
 	}
@@ -119,12 +171,8 @@ public class Fachada extends FachadaModeloImpl {
 		cadSum.gerarSumarioReferencias(usu, raiz);
 		cadSum.gerarSumarioReferenciasDetalhado(usu, raiz);
 	}
-
-	public void excluirSumariosInvalidos(Usuario usu) throws ErroModelo {
-		getCadastroSumario().excluirSumariosInvalidos(usu);
-	}
-
-	//// VALIDA«’ES COMPLETAS ////
+	
+	//// VALIDA√á√ïES COMPLETAS ////
 
 	public void gerarValidacaoProjetos(Usuario usu) throws ErroModelo {
 		getCadastroSumario().gerarValidacaoProjetos(usu, getCadastroProjeto().validarTodos(usu));
@@ -142,10 +190,10 @@ public class Fachada extends FachadaModeloImpl {
 		getCadastroSumario().gerarValidacaoReferencias(usu, getCadastroReferencia().validarTodos(usu));
 	}
 
-	//// VALIDA«’ES PARCIAIS (ASSUME ENTIDADES J¡ VALIDADAS) ////
+	//// VALIDA√á√ïES PARCIAIS (ASSUME ENTIDADES J√Å VALIDADAS) ////
 
-	public void validarEntidades(Usuario usu) throws ErroModelo {
-		CadastroEvn.validarEntidades(usu);
+	public void desatualizarCachesParaValidacao(Usuario usu) throws ErroModelo {
+		CadastroEvn.desatualizarCachesParaValidacao(usu);
 	}
 
 	public void gerarValidacaoParcialProjetos(Usuario usu) throws ErroModelo {
@@ -166,14 +214,14 @@ public class Fachada extends FachadaModeloImpl {
 
 	//// LOGS ////
 
-	public Nota consultarPorNome(Usuario usu, String nome) throws ErroModelo {
+	public void desativarServicoLog(Usuario usu) {
+		CadastroLog.desativarServico(usu);
+	}
+
+	public Nota consultarLogPorNome(Usuario usu, String nome) throws ErroModelo {
 		return getCadastroLog().consultarPorNome(usu, nome);
 	}
-	
-	public Nota gerarLogUsuario(Usuario usu) throws ErroModelo {
-		return getCadastroLog().gerarLogUsuario(usu);
-	}
-	
+
 	public void excluirLogsAntigos(Usuario usu) throws ErroModelo {
 		getCadastroLog().excluirLogsAntigos(usu);
 	}

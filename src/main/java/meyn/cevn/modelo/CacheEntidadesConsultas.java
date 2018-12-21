@@ -80,7 +80,7 @@ abstract class CacheEntidadesConsultas extends CacheEvn<String, CacheEntidadesEv
 	}
 
 	protected static <TipoChave, TipoValor> CacheEvn<TipoChave, TipoValor> getCache(Usuario usu,
-			Class<? extends CacheEvn<TipoChave, TipoValor>> tipo) throws ErroModelo {
+	        Class<? extends CacheEvn<TipoChave, TipoValor>> tipo) throws ErroModelo {
 		CacheEvn<TipoChave, TipoValor> cache = CacheEvn.getCache(usu, tipo);
 		if (!cache.isAtualizado()) {
 			cache.clear();
@@ -91,16 +91,23 @@ abstract class CacheEntidadesConsultas extends CacheEvn<String, CacheEntidadesEv
 
 	protected abstract CacheEntidadesEvn<?> get(Usuario usu, InfoConsulta<?, ?> infoCache) throws ErroModelo;
 
-	protected void invalidarCaches(Collection<String> clChavesCaches) throws ErroModelo {
+	protected void desatualizarCaches() throws ErroModelo {
+		for (CacheEntidadesEvn<?> cache : values()) {
+			cache.setAtualizado(false);
+		}
+	}
+
+	protected void desatualizarCaches(Collection<String> clChavesCaches) throws ErroModelo {
 		for (String chave : clChavesCaches) {
 			if (containsKey(chave)) {
-				get(chave).invalidar();
+				get(chave).setAtualizado(false);
 			}
 		}
 	}
 
-	protected void validarEntidades() throws ErroModelo {
+	protected void desatualizarCachesParaValidacao() throws ErroModelo {
 		for (CacheEntidadesEvn<?> cache : values()) {
+			cache.setAtualizado(false);
 			cache.setValidarEntidades(true);
 		}
 	}

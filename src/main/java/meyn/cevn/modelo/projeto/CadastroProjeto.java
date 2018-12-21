@@ -32,8 +32,9 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 
 	private static final String REPOSITORIO = "2. Projetos";
 	private static final String GRUPO = "<2. Projeto>";
-	
-	private final CadastroEtiqueta<Etiqueta> cadEtqProj = new CadastroEtiqueta<Etiqueta>("<2. Projeto>") {};
+
+	private final CadastroEtiqueta<Etiqueta> cadEtqProj = new CadastroEtiqueta<Etiqueta>("<2. Projeto>") {
+	};
 
 	public CadastroProjeto() throws ErroModelo {
 		super(REPOSITORIO, GRUPO, true, false, false);
@@ -58,7 +59,7 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 		Predicate<? extends Nota> ehDoProjeto = (nota) -> {
 			List<String> lsIds = nota.getMetadado().getTagGuids();
 			return lsIds != null && lsIds.contains(idEtq);
-		};		
+		};
 
 		// Interesses
 		CadastroInteresse cadIntr = getCadastro(ChavesModelo.INTERESSE);
@@ -67,9 +68,9 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 			clIntrs.add(cadIntr.consultarPorNome(usu, cacheTag.get(id).getName()));
 		}
 		proj.setInteresses(clIntrs);
-		// AÁıes
+		// A√ß√µes
 		CadastroAcao cadAcao = getCadastro(ChavesModelo.ACAO);
-		Predicate<Acao> ehAcaoProjeto = (Predicate<Acao>)ehDoProjeto;
+		Predicate<Acao> ehAcaoProjeto = (Predicate<Acao>) ehDoProjeto;
 		Predicate<Acao> ehAcaoSemData = (acao) -> acao.getDataLembrete() == null;
 		proj.setAcoesEmFoco(cadAcao.consultarPorRepositorio(usu, CadastroAcao.REPOSITORIO_FOCO, ehAcaoProjeto.and(ehAcaoSemData)));
 		proj.setAcoesDelegadas(cadAcao.consultarPorRepositorio(usu, CadastroAcao.REPOSITORIO_DELEGADA, ehAcaoProjeto.and(ehAcaoSemData)));
@@ -77,31 +78,31 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 		List<Acao> lsAcoes = new ArrayList<Acao>(cadAcao.consultarPorFiltro(usu, ehAcaoProjeto.and(ehAcaoSemData.negate())));
 		Collections.sort(lsAcoes, (a, b) -> a.getDataLembrete().compareTo(b.getDataLembrete()));
 		proj.setAcoesCalendario(lsAcoes);
-		// ReferÍncias
+		// Refer√™ncias
 		CadastroReferencia cadRef = getCadastro(ChavesModelo.REFERENCIA);
 		proj.setReferencias(cadRef.consultarPorFiltro(usu, (Predicate<Referencia>) ehDoProjeto));
-		// Sum·rios
+		// Sum√°rios
 		CadastroSumario cadSum = getCadastro(ChavesModelo.SUMARIO);
 		try {
 			proj.setSumarioValidacao(cadSum.consultarValidacaoPorProjeto(usu, proj));
 		} catch (ErroItemNaoEncontrado e) {
-			getLogger().warn("ValidaÁ„o n„o encontrada: {}", proj.getNome());
+			getLogger().warn("Valida√ß√£o n√£o encontrada: {}", proj.getNome());
 		}
 		try {
 			proj.setSumario(cadSum.consultarPorProjeto(usu, proj));
 		} catch (ErroItemNaoEncontrado e) {
-			getLogger().warn("Sum·rio n„o encontrado: {}", proj.getNome());
+			getLogger().warn("Sum√°rio n√£o encontrado: {}", proj.getNome());
 		}
 	}
 
 	@Override
-	public void validarPropriedadesEnt(Usuario usu, Projeto proj) {
+	protected void validarPropriedadesEnt(Usuario usu, Projeto proj) {
 		super.validarPropriedadesEnt(usu, proj);
 		Collection<String> clMsgs = proj.getMensagensValidacao();
 		// Etiqueta
 		List<String> lsIdsTag = proj.getMetadado().getTagGuids();
 		if (lsIdsTag == null || !lsIdsTag.contains(proj.getEtiqueta().getId())) {
-			clMsgs.add("Etiqueta n„o encontrada: " + proj.getNome());
+			clMsgs.add("Etiqueta n√£o encontrada: " + proj.getNome());
 		}
 		// Lembrete
 		if (proj.isLembrete()) {
@@ -110,11 +111,17 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 	}
 
 	@Override
+	public void desatualizarCache(Usuario usu) throws ErroModelo {
+		super.desatualizarCache(usu);
+		cadEtqProj.desatualizarCache(usu);
+	}
+
+	@Override
 	public Projeto consultarPorChavePrimaria(Usuario usu, String id) throws ErroCadastro {
 		try {
 			return super.consultarPorChavePrimaria(usu, id);
 		} catch (ErroItemNaoEncontrado e) {
-			return consultarPorNome(usu, cadEtqProj.consultarPorChavePrimaria(usu, id).getNome());		
+			return consultarPorNome(usu, cadEtqProj.consultarPorChavePrimaria(usu, id).getNome());
 		}
 	}
 }

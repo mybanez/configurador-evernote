@@ -27,12 +27,12 @@ import meyn.util.modelo.Modelo;
 @Modelo(ChavesModelo.ACAO)
 public class CadastroAcao extends CadastroNota<Acao> {
 
-	private static final String REPOSITORIO = "3. Ações";
+	private static final String REPOSITORIO = "3. AÃ§Ãµes";
 	public static final String REPOSITORIO_FOCO = "3.1. Em Foco";
 	public static final String REPOSITORIO_DELEGADA = "3.2. Delegadas";
-	public static final String REPOSITORIO_PROXIMA = "3.3. Próximas";
+	public static final String REPOSITORIO_PROXIMA = "3.3. PrÃ³ximas";
 
-	private static final String GRUPO = "<3. Ação>";
+	private static final String GRUPO = "<3. AÃ§Ã£o>";
 
 	private static final String ATRIB_COMUNICAR = "Comunicar";
 	private static final String ATRIB_LER_REVISAR = "Ler/Revisar";
@@ -40,7 +40,7 @@ public class CadastroAcao extends CadastroNota<Acao> {
 	private static final String EXP_TITULO_PERIODICA = "(((\\(D\\))|(\\(S\\))|(\\(Q\\))|(\\(M\\))|(\\(BM\\))|(\\(TM\\))|(\\(SM\\))|(\\(A\\)))\\s)?";
 	private static final String EXP_TITULO_LEMBRETE = EXP_TITULO_PERIODICA + "\\S.*";
 	private static final String EXP_TITULO_DELEGADA = EXP_TITULO_PERIODICA + "[^\\s-]+\\s-\\s[^\\s-][^-]*";
-	private static final String EXP_TITULO_COMUNICAR = "(" + EXP_TITULO_PERIODICA + "Reunião\\s-\\s)?[^\\s-][^-]*";
+	private static final String EXP_TITULO_COMUNICAR = "(" + EXP_TITULO_PERIODICA + "ReuniÃ£o\\s-\\s)?[^\\s-][^-]*";
 	private static final String EXP_TITULO_LER_REVISAR = "Ler\\s-\\s\\S.*";
 
 	@SuppressWarnings("serial")
@@ -114,31 +114,31 @@ public class CadastroAcao extends CadastroNota<Acao> {
 	}
 
 	@Override
-	public void validarPropriedadesEnt(Usuario usu, Acao acao) {
+	protected void validarPropriedadesEnt(Usuario usu, Acao acao) {
 		super.validarPropriedadesEnt(usu, acao);
 		Collection<String> clMsgs = acao.getMensagensValidacao();
-		// Título
+		// TÃ­tulo
 		String nome = acao.getNome();
 		if (acao.isFoco() || acao.isProxima()) {
 			if (acao.isComunicacao()) {
 				if (!nome.matches(EXP_TITULO_COMUNICAR)) {
-					clMsgs.add("Ação de comunicação com título inválido");
+					clMsgs.add("AÃ§Ã£o de comunicaÃ§Ã£o com tÃ­tulo invÃ¡lido");
 				}
 			} else if (acao.isLeituraRevisao()) {
 				if (!nome.matches(EXP_TITULO_LER_REVISAR)) {
-					clMsgs.add("Ação de leitura com título inválido");
+					clMsgs.add("AÃ§Ã£o de leitura com tÃ­tulo invÃ¡lido");
 				}
 			}
 		} else if (acao.isDelegada()) {
 			if (!nome.matches(EXP_TITULO_DELEGADA)) {
-				clMsgs.add("Ação delegada com título inválido");
+				clMsgs.add("AÃ§Ã£o delegada com tÃ­tulo invÃ¡lido");
 			}
 		}
 		// Lembrete
 		if (acao.isLembrete()) {
-			// Título e horário
+			// Tï¿½tulo e horï¿½rio
 			if (!nome.matches(EXP_TITULO_LEMBRETE)) {
-				clMsgs.add("Ação lembrete com título inválido");
+				clMsgs.add("AÃ§Ã£o lembrete com tÃ­tulo invÃ¡lido");
 			} else {
 				String freq = nome.replaceFirst(EXP_TITULO_LEMBRETE, "$2");
 				if (!freq.equals("")) {
@@ -147,22 +147,27 @@ public class CadastroAcao extends CadastroNota<Acao> {
 					int horaRef = HORARIOS_LEMBRETES.get(freq);
 					int horaLemb = cal.get(Calendar.HOUR_OF_DAY);
 					int minLemb = cal.get(Calendar.MINUTE);
-					if (horaLemb > horaRef || (horaLemb == horaRef && minLemb > 2)
-							|| (horaLemb == horaRef - 1 && minLemb < 59) || horaLemb < horaRef - 1) {
-						clMsgs.add("Horário da ação lembrete inválido: " + horaLemb + ":" + minLemb + " (Ref: " + horaRef
-								+ ":00)");
+					if (horaLemb > horaRef || (horaLemb == horaRef && minLemb > 2) || (horaLemb == horaRef - 1 && minLemb < 59)
+					        || horaLemb < horaRef - 1) {
+						clMsgs.add("HorÃ¡rio da aÃ§Ã£o lembrete invÃ¡lido: " + horaLemb + ":" + minLemb + " (Ref: " + horaRef + ":00)");
 					}
 				}
 			}
 			if (acao.isProxima()) {
-				clMsgs.add("Ação próxima com lembrete");
+				clMsgs.add("AÃ§Ã£o prÃ³xima com lembrete");
 			}
 		} else {
 			if (acao.isFoco()) {
-				clMsgs.add("Ação em foco sem ser lembrete");
+				clMsgs.add("AÃ§Ã£o em foco sem ser lembrete");
 			} else if (acao.isDelegada()) {
-				clMsgs.add("Ação delegada sem ser lembrete");
+				clMsgs.add("AÃ§Ã£o delegada sem ser lembrete");
 			}
 		}
+	}
+
+	@Override
+	public void desatualizarCache(Usuario usu) throws ErroModelo {
+		super.desatualizarCache(usu);
+		cadAtrib.desatualizarCache(usu);
 	}
 }

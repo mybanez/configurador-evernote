@@ -14,12 +14,16 @@ import meyn.util.modelo.cadastro.CadastroImpl;
 import meyn.util.modelo.cadastro.ErroCadastro;
 import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
-public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends EntidadeEvn<TipoMtd>>
-		extends CadastroImpl<Usuario, TipoEnt> {
+public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends EntidadeEvn<TipoMtd>> extends CadastroImpl<Usuario, TipoEnt> {
 
-	static void validarEntidades(Usuario usu) throws ErroModelo {
-		CacheNotasConsultas.getCache(usu).validarEntidades();
-		CacheEtiquetasConsultas.getCache(usu).validarEntidades();
+	protected static void desatualizarCaches(Usuario usu) throws ErroModelo {
+		CacheNotasConsultas.getCache(usu).desatualizarCaches();
+		CacheEtiquetasConsultas.getCache(usu).desatualizarCaches();
+	}
+
+	protected static void desatualizarCachesParaValidacao(Usuario usu) throws ErroModelo {
+		CacheNotasConsultas.getCache(usu).desatualizarCachesParaValidacao();
+		CacheEtiquetasConsultas.getCache(usu).desatualizarCachesParaValidacao();
 	}
 
 	private String nomeRepositorio;
@@ -37,7 +41,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 		this.entidadeValidavel = entidadeValidavel;
 	}
 
-	protected final String getNomeRepositorio() {
+	protected String getNomeRepositorio() {
 		return nomeRepositorio;
 	}
 
@@ -53,11 +57,6 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 		return entidadeValidavel;
 	}
 
-	protected void invalidarCache(Usuario usu) throws ErroModelo {
-		CacheNotasConsultas.getCache(usu).invalidarCaches(chavesCache);
-		CacheEtiquetasConsultas.getCache(usu).invalidarCaches(chavesCache);
-	}
-
 	protected abstract CacheEntidadesEvn<TipoEnt> getCache(Usuario usu) throws ErroModelo;
 
 	protected abstract void iniciarPropriedadesEnt(Usuario usu, TipoMtd mtd, TipoEnt ent) throws ErroModelo;
@@ -66,6 +65,11 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 	}
 
 	protected void validarPropriedadesEnt(Usuario usu, TipoEnt ent) throws ErroModelo {
+	}
+
+	public void desatualizarCache(Usuario usu) throws ErroModelo {
+		CacheNotasConsultas.getCache(usu).desatualizarCaches(chavesCache);
+		CacheEtiquetasConsultas.getCache(usu).desatualizarCaches(chavesCache);
 	}
 
 	@Override
@@ -89,19 +93,17 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 		}
 	}
 
-	public Collection<TipoEnt> consultarPorRepositorio(Usuario usu, String nomeRepositorio, Predicate<TipoEnt> filtro)
-			throws ErroCadastro {
+	public Collection<TipoEnt> consultarPorRepositorio(Usuario usu, String nomeRepositorio, Predicate<TipoEnt> filtro) throws ErroCadastro {
 		Collection<TipoEnt> clEnts = consultarPorRepositorio(usu, nomeRepositorio);
 		clEnts.removeIf(filtro.negate());
 		return clEnts;
 	}
 
-	public Collection<TipoEnt> consultarPorRepositorio(Usuario usu, String nomeRepositorio)
-			throws ErroCadastro {
+	public Collection<TipoEnt> consultarPorRepositorio(Usuario usu, String nomeRepositorio) throws ErroCadastro {
 		try {
 			return getCache(usu).consultarPorRepositorio(nomeRepositorio);
 		} catch (ErroModelo e) {
-			throw new ErroCadastro("Erro consultando itens por repositÛrio: " + nomeRepositorio, e);
+			throw new ErroCadastro("Erro consultando itens por reposit√≥rio: " + nomeRepositorio, e);
 		}
 	}
 
@@ -115,7 +117,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 
 	public Collection<TipoEnt> validarTodos(Usuario usu) throws ErroCadastro {
 		try {
-			validarEntidades(usu);
+			desatualizarCachesParaValidacao(usu);
 			Collection<TipoEnt> clEnts = consultarTodos(usu);
 			return clEnts;
 		} catch (ErroModelo e) {
@@ -129,7 +131,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 
 	public TipoEnt validarPorChavePrimaria(Usuario usu, String id) throws ErroCadastro {
 		try {
-			validarEntidades(usu);
+			desatualizarCachesParaValidacao(usu);
 			TipoEnt ent = consultarPorChavePrimaria(usu, id);
 			return ent;
 		} catch (ErroItemNaoEncontrado e) {
@@ -163,7 +165,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 		}
 	}
 
-	//// GERA«√O DE ENML ////
+	//// GERA√á√ÉO DE ENML ////
 
 	private static final String EXP_QUEBRA_LINHA = "(?m)^(.*)$";
 
@@ -182,8 +184,8 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 		cont.append("</en-note>");
 	}
 
-	protected <TipoTitulo, TipoItem> void gerarListaItens(StringBuffer cont, TipoTitulo titulo,
-			GeradorENML<TipoTitulo> grTitulo, Collection<TipoItem> clItens, GeradorENML<TipoItem> grItem) {
+	protected <TipoTitulo, TipoItem> void gerarListaItens(StringBuffer cont, TipoTitulo titulo, GeradorENML<TipoTitulo> grTitulo,
+	        Collection<TipoItem> clItens, GeradorENML<TipoItem> grItem) {
 		if (!clItens.isEmpty()) {
 			grTitulo.executar(cont, titulo);
 			gerarInicioLista(cont);
@@ -208,17 +210,16 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 
 	protected void gerarTextoURL(StringBuffer cont, String texto, String estiloTexto, String url) {
 		cont.append("<a style=\"").append(estiloTexto).append("\" href=\"").append(url).append("\">")
-				.append(StringEscapeUtils.escapeXml11(texto)).append("</a>");
+		        .append(StringEscapeUtils.escapeXml11(texto)).append("</a>");
 	}
 
 	protected void gerarTextoMultilinha(StringBuffer cont, String texto, String estiloTexto) {
 		cont.append("<span style=\"").append(estiloTexto).append("\">")
-				.append(StringEscapeUtils.escapeXml11(texto).replaceAll(EXP_QUEBRA_LINHA, "$1<br/>")).append("</span>");
+		        .append(StringEscapeUtils.escapeXml11(texto).replaceAll(EXP_QUEBRA_LINHA, "$1<br/>")).append("</span>");
 	}
 
 	protected void gerarTexto(StringBuffer cont, String texto, String estiloTexto) {
-		cont.append("<span style=\"").append(estiloTexto).append("\">").append(StringEscapeUtils.escapeXml11(texto))
-				.append("</span>");
+		cont.append("<span style=\"").append(estiloTexto).append("\">").append(StringEscapeUtils.escapeXml11(texto)).append("</span>");
 	}
 
 	protected void gerarInicioLinha(StringBuffer cont, String estiloTexto) {

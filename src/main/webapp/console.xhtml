@@ -9,10 +9,18 @@
 	<script type="text/javascript" src="/console.js" />
 	<h:inputHidden id="resultado"
 		rendered="${not empty param.sumario ? true : false}"
-		value="${console.resultadoGeracaoSumariosParametro}" />
+		value="${console.resultadoGeracaoSumariosParametro}">
+<<<<<<< HEAD
+	</h:inputHidden>
 	<script type="text/javascript">
 		testarResultadoOperacao();
 	</script>
+=======
+		<script type="text/javascript">
+			testarResultadoOperacao();
+		</script>
+	</h:inputHidden>
+>>>>>>> refs/remotes/origin/master
 	<div class="ui-painel-overlay" id="painelImgProc">
 		<h:graphicImage id="imgProc" value="/Processando.gif"></h:graphicImage>
 	</div>
@@ -138,7 +146,7 @@
 						<div class="ui-console-rod-cevn">
 							<p:commandButton onstart="ligarAtualizadorTela()" async="true"
 								process="@form" update="paineis:console"
-								actionListener="#{console.gerarSumariosConsole}"
+								actionListener="#{console.gerarSumarios}"
 								value="Gerar Sumários" style="font-size: 12pt;" id="btGerar" />
 							<p:poll oncomplete="desligarAtualizadorTela()"
 								id="atualizadorTela" widgetVar="atualizadorTela" async="true"
@@ -212,8 +220,12 @@
 						oncomplete="mostrarImagemProcessando(false)" async="true"
 						process="@this" update="paineis:sumarios" value="Recarregar"
 						style="font-size: 10pt;" id="btRecarregarSums">
-						<f:param name="forcarConsistencia" value="true" />
+						<f:param name="forcarCarregamento" value="true" />
 					</p:commandButton>
+					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
+						process="@this" update="paineis:console"
+						actionListener="#{console.forcarConsistenciaSumarios}" value="Forçar Consistência"
+						style="font-size: 10pt;" id="btForcarConsistenciaSums" />
 					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
 						process="@this" update="paineis:console"
 						actionListener="#{console.excluirSumarios}" value="Excluir Todos"
@@ -223,7 +235,7 @@
 					filteredValue="#{console.sumariosFiltrado}" rows="10"
 					paginator="true" emptyMessage="Lista de sumários vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-					rowsPerPageTemplate="10,15,25,50,100">
+					rowsPerPageTemplate="10,50,100,500,1000">
 					<p:column filterBy="#{sum.dataCriacaoFmt}"
 						filterMatchMode="contains" headerText="Criação"
 						style="width: 16%;" sortBy="#{sum.dataCriacao}">
@@ -254,14 +266,14 @@
 						oncomplete="mostrarImagemProcessando(false)" async="true"
 						process="@this" update="paineis:interesses" value="Recarregar"
 						style="font-size: 10pt;" id="btRecarregarIntrs">
-						<f:param name="forcarConsistencia" value="true" />
+						<f:param name="forcarCarregamento" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="intr" value="#{console.interesses}"
 					filteredValue="#{console.interessesFiltrado}" rows="10"
 					paginator="true" emptyMessage="Lista de interesses vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-					rowsPerPageTemplate="10,15,25,50,100">
+					rowsPerPageTemplate="10,50,100,500,1000">
 					<p:column filterBy="#{intr.nome}" filterMatchMode="contains"
 						headerText="Nome" style="width: 60%;" sortBy="#{intr.nome}">
 						<h:outputText value="#{intr.nome}" />
@@ -283,14 +295,14 @@
 						oncomplete="mostrarImagemProcessando(false)" async="true"
 						process="@this" update="paineis:projetos" value="Recarregar"
 						style="font-size: 10pt;" id="btRecarregarProjs">
-						<f:param name="forcarConsistencia" value="true" />
+						<f:param name="forcarCarregamento" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="proj" value="#{console.projetos}"
 					filteredValue="#{console.projetosFiltrado}" rows="10"
 					paginator="true" emptyMessage="Lista de projetos vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-					rowsPerPageTemplate="10,15,25,50,100">
+					rowsPerPageTemplate="10,50,100,500,1000">
 					<p:column filterBy="#{proj.nome}" filterMatchMode="contains"
 						headerText="Nome" style="width: 60%;" sortBy="#{proj.nome}">
 						<h:outputText value="#{proj.nome}" />
@@ -310,14 +322,14 @@
 						oncomplete="mostrarImagemProcessando(false)" async="true"
 						process="@this" update="paineis:acoes" value="Recarregar"
 						style="font-size: 10pt;" id="btRecarregarAcoes">
-						<f:param name="forcarConsistencia" value="true" />
+						<f:param name="forcarCarregamento" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="acao" value="#{console.acoes}"
 					filteredValue="#{console.acoesFiltrado}" rows="10" paginator="true"
 					emptyMessage="Lista de ações vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-					rowsPerPageTemplate="10,15,25,50,100">
+					rowsPerPageTemplate="10,50,100,500,1000">
 					<p:column filterBy="#{acao.nome}" filterMatchMode="contains"
 						headerText="Nome" style="width: 60%;" sortBy="#{acao.nome}">
 						<h:outputText value="#{acao.nome}" />
@@ -338,14 +350,14 @@
 						oncomplete="mostrarImagemProcessando(false)" async="true"
 						process="@this" update="paineis:referencias" value="Recarregar"
 						style="font-size: 10pt;" id="btRecarregarRefs">
-						<f:param name="forcarConsistencia" value="true" />
+						<f:param name="forcarCarregamento" value="true" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="ref" value="#{console.referencias}"
 					filteredValue="#{console.referenciasFiltrado}" rows="10"
 					paginator="true" emptyMessage="Lista de referências vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-					rowsPerPageTemplate="10,15,25,50,100">
+					rowsPerPageTemplate="10,50,100,500,1000">
 					<p:column filterBy="#{ref.nome}" filterMatchMode="contains"
 						headerText="Nome" style="width: 60%;" sortBy="#{ref.nome}">
 						<h:outputText value="#{ref.nome}" />
@@ -371,7 +383,7 @@
 				<p:dataTable id="tabela" var="log" value="#{console.logs}" rows="10"
 					paginator="true" emptyMessage="Lista de logs vazia"
 					paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
-					rowsPerPageTemplate="10,15,25,50,100">
+					rowsPerPageTemplate="10,50,100,500,1000">
 					<p:column filterBy="#{log.dataAlteracaoFmt}"
 						filterMatchMode="contains" headerText="Alteração"
 						style="width: 16%;" sortBy="#{log.dataAlteracao}">

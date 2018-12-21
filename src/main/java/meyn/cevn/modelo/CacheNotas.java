@@ -13,12 +13,12 @@ import meyn.util.modelo.ErroModelo;
 
 @SuppressWarnings("serial")
 abstract class CacheNotas<TipoNota extends Nota> extends CacheEntidadesEvn<TipoNota> {
-	
+
 	private class CachePorGrupo extends Cache<String, Grupo<TipoNota>> {
-		CachePorGrupo() { 
+		CachePorGrupo() {
 			setLogger(CacheNotas.this.getLogger());
 		}
-		
+
 		void put(TipoNota nota) {
 			try {
 				Grupo<TipoNota> grupo, subgrupo;
@@ -41,10 +41,10 @@ abstract class CacheNotas<TipoNota extends Nota> extends CacheEntidadesEvn<TipoN
 								if (subgrupo != null) {
 									grupo.getGruposFilho().add(subgrupo);
 								} else {
-									//Só inclui se item não está em subgrupo
+									// SÃ³ inclui se item nÃ£o estÃ¡ em subgrupo
 									if (Collections.disjoint(cacheTag.consultarPorRepositorio(grupo.getNome()), lsIds)) {
 										grupo.getEntidadesFilho().add(nota);
-									}	
+									}
 								}
 								subgrupo = grupo;
 							}
@@ -62,7 +62,7 @@ abstract class CacheNotas<TipoNota extends Nota> extends CacheEntidadesEvn<TipoN
 	}
 
 	private class CachePorRepositorio extends Cache<String, List<TipoNota>> {
-		CachePorRepositorio() { 
+		CachePorRepositorio() {
 			setLogger(CacheNotas.this.getLogger());
 		}
 
@@ -111,7 +111,7 @@ abstract class CacheNotas<TipoNota extends Nota> extends CacheEntidadesEvn<TipoN
 
 	@Override
 	protected Grupo<TipoNota> consultarPorGrupo(String nomeGrupo) throws ErroModelo {
-		return cacheGrupo.getOrDefault(nomeGrupo, new Grupo<TipoNota>(nomeGrupo));	
+		return cacheGrupo.getOrDefault(nomeGrupo, new Grupo<TipoNota>(nomeGrupo));
 	}
 
 	@Override

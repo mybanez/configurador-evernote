@@ -19,33 +19,30 @@ function trocarCheckBoxes(fonte, chave) {
 }
 
 function desativarBotoes(desativado) {
-    var botoes = document.getElementsByTagName("button");
-    for (var i = 0; i < botoes.length; i++) {
-    	botoes[i].disabled = desativado;
-    }	
+	var botoes = document.getElementsByTagName("button");
+	for (var i = 0; i < botoes.length; i++) {
+		botoes[i].disabled = desativado;
+	}
 }
 
 function mostrarImagemProcessando(mostrar) {
-    var painel = document.getElementById('painelImgProc');
-    painel.style.display = (mostrar ? 'block' : 'none');
+	var painel = document.getElementById('painelImgProc');
+	painel.style.display = (mostrar ? 'block' : 'none');
 }
 
 function ligarAtualizadorTela() {
 	desativarBotoes(true);
 	mostrarImagemProcessando(true);
-    PF('atualizadorTela').start();
+	PF('atualizadorTela').start();
 }
 
 function desligarAtualizadorTela() {
 	var processos = document.getElementById('paineis:console:processos');
-	if (processos.value == 0) {
+	var saida = document.getElementById('paineis:console:saida:padrao');
+	if (processos.value == 0 && saida.innerHTML.indexOf('PROCESSO FINALIZADO') == -1) {
 		PF('atualizadorTela').stop();
 		mostrarImagemProcessando(false);
-		desativarBotoes(false);	
-		var saida = document.getElementById('paineis:console:saida:padrao');
-		if (saida.innerHTML != '') {
-			saida.innerHTML += '\n';
-		}
+		desativarBotoes(false);
 		var status = document.getElementById('paineis:console:status');
 		var msgSumario, msgDetalhe, msgSeveridade;
 		if (status.value == 'ok') {
@@ -57,7 +54,7 @@ function desligarAtualizadorTela() {
 			msgDetalhe = 'Processamento finalizado: consultar console/log';
 			msgSeveridade = 'error';
 		}
-		saida.innerHTML += msgDetalhe.toUpperCase();
+		saida.innerHTML += '\n' + msgDetalhe.toUpperCase();
 		PF('mensagem').renderMessage({
 			'summary' : msgSumario,
 			'detail' : msgDetalhe,
@@ -66,7 +63,7 @@ function desligarAtualizadorTela() {
 	}
 }
 
-function atualizarPosicaoJanela(){
-    var element = document.getElementById('paineis:console:saida:janela');
-    element.scrollTop = element.scrollHeight;
+function atualizarPosicaoJanela() {
+	var element = document.getElementById('paineis:console:saida:janela');
+	element.scrollTop = element.scrollHeight;
 }

@@ -32,7 +32,7 @@ public abstract class CadastroEtiqueta<TipoEtq extends Etiqueta> extends Cadastr
 	protected CadastroEtiqueta(String nomeRepositorio) throws ErroCadastro {
 		this(nomeRepositorio, false);
 	}
-	
+
 	protected CadastroEtiqueta(String nomeRepositorio, boolean validavel) throws ErroCadastro {
 		super(nomeRepositorio, nomeRepositorio, validavel);
 		consultaPadrao = new ConsultaPadrao();

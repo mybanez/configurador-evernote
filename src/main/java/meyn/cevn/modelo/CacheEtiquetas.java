@@ -28,7 +28,7 @@ abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheEntidadesEv
 					String nomeGrupo = tag.getName();
 					grupo = getOrDefault(idGrupo, new Grupo<TipoEtq>(nomeGrupo));
 					if (grupo.isVazio()) {
-						put(idGrupo, grupo);	
+						put(idGrupo, grupo);
 						put(nomeGrupo, grupo);
 					}
 					if (subgrupo != null) {
@@ -40,7 +40,7 @@ abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheEntidadesEv
 					} else {
 						String id = etq.getId();
 						if (containsKey(id)) {
-							get(id).setEntidade(etq);	
+							get(id).setEntidade(etq);
 						} else {
 							grupo.getEntidadesFilho().add(etq);
 						}
@@ -61,8 +61,7 @@ abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheEntidadesEv
 					mtd = cacheTag.get(mtd.getParentGuid());
 					String idRepo = mtd.getGuid();
 					String nomeRepo = mtd.getName();
-					SortedSet<TipoEtq> stFilhos = getOrDefault(idRepo, 
-							new TreeSet<TipoEtq>((a,b) -> a.getNome().compareTo(b.getNome())));
+					SortedSet<TipoEtq> stFilhos = getOrDefault(idRepo, new TreeSet<TipoEtq>((a, b) -> a.getNome().compareTo(b.getNome())));
 					if (stFilhos.isEmpty()) {
 						put(idRepo, stFilhos);
 						put(nomeRepo, stFilhos);
@@ -76,26 +75,26 @@ abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheEntidadesEv
 	private CachePorGrupo cacheGrupo = null;
 	private CachePorRepositorio cacheRepo = null;
 
+	// Para garantir consistência, só deve ser chamado em CacheEtiquetasConsultas
 	@Override
 	public void clear() {
 		super.clear();
 		cacheRepo = null;
-	}	
-	
+	}
+
 	@Override
 	public Grupo<TipoEtq> consultarPorGrupo(String nomeGrupo) throws ErroModelo {
 		if (cacheGrupo == null) {
 			cacheGrupo = new CachePorGrupo();
-		} 
-		return cacheGrupo.getOrDefault(nomeGrupo, new Grupo<TipoEtq>(nomeGrupo));	
+		}
+		return cacheGrupo.getOrDefault(nomeGrupo, new Grupo<TipoEtq>(nomeGrupo));
 	}
 
 	@Override
-	public Collection<TipoEtq> consultarPorRepositorio(String nomeRepositorio)
-			throws ErroModelo {
+	public Collection<TipoEtq> consultarPorRepositorio(String nomeRepositorio) throws ErroModelo {
 		if (cacheRepo == null) {
 			cacheRepo = new CachePorRepositorio();
-		} 
+		}
 		return new ArrayList<TipoEtq>(cacheRepo.getOrDefault(nomeRepositorio, Collections.emptySortedSet()));
 	}
 }

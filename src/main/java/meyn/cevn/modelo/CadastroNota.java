@@ -21,14 +21,14 @@ import meyn.util.modelo.entidade.FabricaEntidade;
 public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<NoteMetadata, TipoNota> {
 
 	private static final String EXP_TITULO_PADRAO = "^\\S.+";
-	
+
 	private static final SimpleDateFormat FORMATO_DATA;
-	
+
 	static {
 		FORMATO_DATA = new SimpleDateFormat("dd/MM/yy - HH:mm:ss");
 		FORMATO_DATA.setTimeZone(FusoHorario.FORTALEZA);
 	}
-	
+
 	protected class ConsultaPadrao extends CacheNotasConsultas.InfoConsulta<TipoNota> {
 
 		ConsultaPadrao() {
@@ -73,8 +73,8 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 		this(nomeRepositorio, "", validavel, true, repositorioPilha);
 	}
 
-	protected CadastroNota(String nomeRepositorio, String nomeGrupo, boolean validavel,
-			boolean grupoHomonimoDeItemPermitido, boolean repositorioPilha) throws ErroCadastro {
+	protected CadastroNota(String nomeRepositorio, String nomeGrupo, boolean validavel, boolean grupoHomonimoDeItemPermitido,
+	        boolean repositorioPilha) throws ErroCadastro {
 		super(nomeRepositorio, nomeGrupo, validavel);
 		this.grupoHomonimoDeItemPermitido = grupoHomonimoDeItemPermitido;
 		this.comandoConsulta = (repositorioPilha ? "stack" : "notebook") + ":\"" + nomeRepositorio + "\"";
@@ -94,7 +94,7 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	}
 
 	@SuppressWarnings("unchecked")
-	@Override 
+	@Override
 	protected CacheEntidadesEvn<TipoNota> getCache(Usuario usu) throws ErroModelo {
 		return (CacheEntidadesEvn<TipoNota>) CacheNotasConsultas.getCache(usu).get(usu, consultaPadrao);
 	}
@@ -111,7 +111,7 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 		nota.setDataLembrete(noteAtribs.isSetReminderTime() ? new Date(noteAtribs.getReminderTime()) : null);
 		nota.setURL(usu.getPrefixoURL() + nota.getId() + "/" + nota.getId());
 	}
-	
+
 	@Override
 	protected void iniciarPropriedadesEnt(Usuario usu, NoteMetadata mtd, TipoNota nota) throws ErroModelo {
 		nota.setMetadado(mtd);
@@ -127,7 +127,7 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 		Collection<String> clMsgs = nota.getMensagensValidacao();
 		String nome = nota.getNome();
 		if (!nome.matches(EXP_TITULO_PADRAO)) {
-			clMsgs.add("Título vazio ou iniciando com espaços: " + nome);
+			clMsgs.add("TÃ­tulo vazio ou iniciando com espaÃ§os: " + nome);
 		}
 	}
 
@@ -151,7 +151,7 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 		try {
 			nota.setConteudo(ClienteEvn.consultarNota(usu, nota.getId(), true).getContent());
 		} catch (ErroModelo e) {
-			throw new ErroCadastro("Erro carregando conteúdo da nota: " + nota.getNome(), e);
+			throw new ErroCadastro("Erro carregando conteÃºdo da nota: " + nota.getNome(), e);
 		}
 	}
 
@@ -163,7 +163,7 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 			iniciarPropriedadesMetadado(mtd, nota);
 			mtd = ClienteEvn.incluirNota(usu, mtd);
 			iniciarPropriedadesEnt(usu, mtd, nota);
-			getLogger().info("incluído: {}", nota.getNome());
+			getLogger().info("incluÃ­do: {}", nota.getNome());
 			return nota;
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro incluindo nota: " + nota.getNome(), e);
@@ -187,7 +187,7 @@ public abstract class CadastroNota<TipoNota extends Nota> extends CadastroEvn<No
 	public void excluir(Usuario usu, TipoNota nota) throws ErroCadastro {
 		try {
 			ClienteEvn.excluirNota(usu, nota.getId());
-			getLogger().info("excluído: {}", nota.getNome());
+			getLogger().info("excluÃ­do: {}", nota.getNome());
 		} catch (ErroModelo e) {
 			throw new ErroCadastro("Erro excluindo nota: " + nota.getNome(), e);
 		}

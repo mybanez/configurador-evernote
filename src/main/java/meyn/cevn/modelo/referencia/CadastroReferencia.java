@@ -24,14 +24,17 @@ import meyn.util.modelo.cadastro.ErroItemNaoEncontrado;
 
 @Modelo(ChavesModelo.REFERENCIA)
 public class CadastroReferencia extends CadastroNota<Referencia> {
-	private static final String REPOSITORIO = "4. Referências";
-	private static final String GRUPO = "<4. Referência>";
 
-	private final CadastroEtiqueta<Etiqueta> cadForm = new CadastroEtiqueta<Etiqueta>("<Formato>") {};
-	private final CadastroEtiqueta<Etiqueta> cadTema = new CadastroEtiqueta<Etiqueta>("<Tema>") {};
+	private static final String REPOSITORIO = "4. ReferÃªncias";
+	private static final String GRUPO = "<4. ReferÃªncia>";
+
+	private final CadastroEtiqueta<Etiqueta> cadForm = new CadastroEtiqueta<Etiqueta>("<Formato>") {
+	};
+	private final CadastroEtiqueta<Etiqueta> cadTema = new CadastroEtiqueta<Etiqueta>("<Tema>") {
+	};
 
 	public CadastroReferencia() throws ErroModelo {
-		super(REPOSITORIO, GRUPO, true, true, true);	
+		super(REPOSITORIO, GRUPO, true, true, true);
 	}
 
 	@Override
@@ -39,7 +42,7 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 		super.iniciarPropriedadesEnt(usu, mtd, ref);
 		List<String> lsIdsTag = mtd.getTagGuids();
 		if (lsIdsTag == null) {
-			lsIdsTag = Collections.emptyList(); 
+			lsIdsTag = Collections.emptyList();
 		}
 		Collection<Etiqueta> clFormatos = new ArrayList<Etiqueta>();
 		Collection<Etiqueta> clTemas = new ArrayList<Etiqueta>();
@@ -47,18 +50,19 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 			try {
 				clFormatos.add(cadForm.consultarPorChavePrimaria(usu, id));
 				continue;
-			} catch (ErroItemNaoEncontrado e) {	}
+			} catch (ErroItemNaoEncontrado e) {
+			}
 			try {
 				clTemas.add(cadTema.consultarPorChavePrimaria(usu, id));
-			} catch (ErroItemNaoEncontrado e) {	}
+			} catch (ErroItemNaoEncontrado e) {
+			}
 		}
 		ref.setFormatos(clFormatos);
 		ref.setTemas(clTemas);
 	}
 
 	@Override
-	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, NoteMetadata mtd, Referencia ref)
-			throws ErroCadastro {
+	protected void iniciarPropriedadesRelacionamentoEnt(Usuario usu, NoteMetadata mtd, Referencia ref) throws ErroCadastro {
 		List<String> lsIdsTag = mtd.getTagGuids();
 		lsIdsTag = lsIdsTag == null ? Collections.emptyList() : new ArrayList<String>(lsIdsTag);
 		for (Etiqueta etq : ref.getFormatos()) {
@@ -91,16 +95,23 @@ public class CadastroReferencia extends CadastroNota<Referencia> {
 	}
 
 	@Override
-	public void validarPropriedadesEnt(Usuario usu, Referencia ref) {
+	protected void validarPropriedadesEnt(Usuario usu, Referencia ref) {
 		super.validarPropriedadesEnt(usu, ref);
 		Collection<String> clMsgs = ref.getMensagensValidacao();
-		// Formato 
+		// Formato
 		if (ref.getFormatos().isEmpty()) {
-			clMsgs.add("Referência sem formato definido");
+			clMsgs.add("ReferÃªncia sem formato definido");
 		}
 		// Lembrete
 		if (ref.isLembrete()) {
-			clMsgs.add("Referência com lembrete");
+			clMsgs.add("ReferÃªncia com lembrete");
 		}
-	}	
+	}
+
+	@Override
+	public void desatualizarCache(Usuario usu) throws ErroModelo {
+		super.desatualizarCache(usu);
+		cadForm.desatualizarCache(usu);
+		cadTema.desatualizarCache(usu);
+	}
 }
