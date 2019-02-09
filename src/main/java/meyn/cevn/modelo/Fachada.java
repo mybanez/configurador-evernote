@@ -48,12 +48,16 @@ public class Fachada extends FachadaModeloImpl {
 	public void conectar(Usuario usu) throws ErroModelo {
 		if (!ClienteEvn.isConectado(usu)) {
 			ClienteEvn.conectar(usu);
-			// Para evitar duplicações, só gera log para novas sessões
+			// Para evitar duplicações, só gera log para novas conexões
 			usu.setLog(getCadastroLog().gerarLogUsuario(usu));
 		}
 	}
 
-	public void verificarAtualizacoesServidor(Usuario usu) throws ErroModelo {
+	public int consultarTamanhoFilaServidor(Usuario usu) {
+		return ClienteEvn.getTamanhoFilaServidor(usu);
+	}
+
+	public boolean verificarAtualizacoesServidor(Usuario usu) throws ErroModelo {
 		CacheTags cacheTag = CacheTags.getCache(usu);
 		CacheNotebooks cacheNtb = CacheNotebooks.getCache(usu);
 
@@ -77,28 +81,32 @@ public class Fachada extends FachadaModeloImpl {
 		}
 
 		Collection<String> clIdsAtu = ClienteEvn.consultarAtualizacoes(usu, clIds);
-		if (clIdsAtu.contains(ClienteEvn.TAGS)) {
-			clIdsAtu.remove(ClienteEvn.TAGS);
-			cacheTag.desatualizar();
-			desatualizarCaches(usu);
-			logger.debug("atualizar Tags");
-		}
-		if (clIdsAtu.contains(ClienteEvn.NOTEBOOKS)) {
-			clIdsAtu.remove(ClienteEvn.NOTEBOOKS);
-			cacheNtb.desatualizar();
-			desatualizarCaches(usu);
-			logger.debug("atualizar Notebooks");
-		}
-		String idLog = cacheNtb.get(getCadastroLog().getNomeRepositorio()).getGuid();
-		if (clIdsAtu.contains(idLog)) {
-			clIdsAtu.remove(idLog);
-			getCadastroLog().desatualizarCache(usu);
-			logger.debug("atualizar Logs");
-		}
 		if (clIdsAtu.size() > 0) {
-			desatualizarCaches(usu);
-			logger.debug("atualizar Entidades");
+			if (clIdsAtu.contains(ClienteEvn.TAGS)) {
+				clIdsAtu.remove(ClienteEvn.TAGS);
+				cacheTag.desatualizar();
+				desatualizarCaches(usu);
+				logger.debug("atualizar Tags");
+			}
+			if (clIdsAtu.contains(ClienteEvn.NOTEBOOKS)) {
+				clIdsAtu.remove(ClienteEvn.NOTEBOOKS);
+				cacheNtb.desatualizar();
+				desatualizarCaches(usu);
+				logger.debug("atualizar Notebooks");
+			}
+			String idLog = cacheNtb.get(getCadastroLog().getNomeRepositorio()).getGuid();
+			if (clIdsAtu.contains(idLog)) {
+				clIdsAtu.remove(idLog);
+				getCadastroLog().desatualizarCache(usu);
+				logger.debug("atualizar Logs");
+			}
+			if (clIdsAtu.size() > 0) {
+				desatualizarCaches(usu);
+				logger.debug("atualizar Entidades");
+			}
+			return true;
 		}
+		return false;
 	}
 
 	public void desatualizarCaches(Usuario usu) throws ErroModelo {
@@ -171,7 +179,7 @@ public class Fachada extends FachadaModeloImpl {
 		cadSum.gerarSumarioReferencias(usu, raiz);
 		cadSum.gerarSumarioReferenciasDetalhado(usu, raiz);
 	}
-	
+
 	//// VALIDAÇÕES COMPLETAS ////
 
 	public void gerarValidacaoProjetos(Usuario usu) throws ErroModelo {

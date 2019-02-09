@@ -5,6 +5,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.apache.logging.log4j.LogManager;
 
 import com.evernote.auth.EvernoteAuth;
 import com.evernote.auth.EvernoteService;
@@ -36,11 +39,80 @@ public final class ClienteEvn {
 	public static final String TAGS = "TAG";
 	public static final String NOTEBOOKS = "NTB";
 
-	private static final String AUTH_TOKEN_SAND_BOX = "S=s1:U=93be0:E=1683a17eb9d:C=160e266bcc0:P=1cd:A=en-devtoken:V=2:H=a12125d6ec082e623c91bcc59f25de88";
-	private static final String AUTH_TOKEN_PROD = "S=s202:U=187f3ba:E=168dde82bfd:C=1618636fc70:P=1cd:A=en-devtoken:V=2:H=cb717752d1b131b749b1d63ef31e8109";
+	@FunctionalInterface
+	private static interface Operacao {
+		void executar(NoteStoreClient cliente);
+	}
 
-	private static final String USER_STORE_CLIENT = "USER_STORE";
-	private static final String NOTE_STORE_CLIENT = "NOTE_STORE";
+	@SuppressWarnings("serial")
+	private static class ClienteArmazenamento extends ConcurrentLinkedQueue<Operacao> {
+		NoteStoreClient noteStoreClient;
+
+		ClienteArmazenamento(NoteStoreClient noteStoreClient) {
+			this.noteStoreClient = noteStoreClient;
+			new Thread() {
+				@Override
+				public void run() {
+					while (true) {
+						while (!isEmpty()) {
+							synchronized (noteStoreClient) {
+								poll().executar(noteStoreClient);
+							}
+						}
+						synchronized (ClienteArmazenamento.this) {
+							try {
+								ClienteArmazenamento.this.wait();
+							} catch (InterruptedException e) {
+							}
+						}
+					}
+				}
+			}.start();
+		}
+
+		void executar(Operacao oper) {
+			add(oper);
+			synchronized (this) {
+				notify();
+			}
+		}
+	}
+
+	private static class EstoqueClientes {
+		int indice = 0;
+		ClienteArmazenamento[] clientes = new ClienteArmazenamento[QTD_CLIENTES];
+
+		EstoqueClientes(ClientFactory factory) throws EDAMUserException, EDAMSystemException, TException {
+			for (int i = 0; i < QTD_CLIENTES; i++) {
+				clientes[i] = new ClienteArmazenamento(factory.createNoteStoreClient());
+			}
+		}
+
+		ClienteArmazenamento getCliente() {
+			return clientes[indice = (indice + 1) % QTD_CLIENTES];
+		}
+
+		NoteStoreClient getNoteStoreClient() {
+			return getCliente().noteStoreClient;
+		}
+
+		int getTamanhoFilaServidor() {
+			int tam = 0;
+			for (ClienteArmazenamento cliente : clientes) {
+				tam += cliente.size();
+			}
+			return tam;
+		}
+	}
+
+	//private static final String AUTH_TOKEN_SAND_BOX = "S=s1:U=93be0:E=1683a17eb9d:C=160e266bcc0:P=1cd:A=en-devtoken:V=2:H=a12125d6ec082e623c91bcc59f25de88";
+	private static final String AUTH_TOKEN_PROD = "S=s202:U=187f3ba:E=177d55a2052:C=1707da8f248:P=1cd:A=en-devtoken:V=2:H=c63cae010cbe504e12b15db7765d50b9";
+
+	private static final String USER_STORE_CLIENT = "USER_STORE_CLIENT";
+
+	private static final String ESTOQUE_CLIENTES = "FILA_CLIENTES";
+	private static final int QTD_CLIENTES = 10;
+
 	private static final SyncChunkFilter SYNC_FILTER = new SyncChunkFilter();
 
 	static {
@@ -59,12 +131,16 @@ public final class ClienteEvn {
 
 	}
 
-	private static NoteStoreClient getNoteStore(Usuario usu) {
-		return (NoteStoreClient) ContextoEvn.getContexto(usu).get(NOTE_STORE_CLIENT);
+	private static EstoqueClientes getEstoqueClientes(Usuario usu) {
+		return (EstoqueClientes) ContextoEvn.getContexto(usu).get(ESTOQUE_CLIENTES);
 	}
 
-	private static void setNoteStore(Usuario usu, NoteStoreClient nsc) {
-		ContextoEvn.getContextoLocal(usu).put(NOTE_STORE_CLIENT, nsc);
+	private static void setEstoqueClientes(Usuario usu, EstoqueClientes filaClientes) {
+		ContextoEvn.getContexto(usu).put(ESTOQUE_CLIENTES, filaClientes);
+	}
+
+	public static int getTamanhoFilaServidor(Usuario usu) {
+		return getEstoqueClientes(usu).getTamanhoFilaServidor();
 	}
 
 	public static String getNomeUsuario(Usuario usu) throws ErroModelo {
@@ -94,8 +170,7 @@ public final class ClienteEvn {
 			}
 			User user = userStore.getUser();
 			setUserStore(usu, userStore);
-			NoteStoreClient noteStore = factory.createNoteStoreClient();
-			setNoteStore(usu, noteStore);
+			setEstoqueClientes(usu, new EstoqueClientes(factory));
 			usu.setPrefixoURL("evernote:///view/" + user.getId() + "/" + user.getShardId() + "/");
 			usu.setContadorAtualizacao(0);
 		} catch (TException | EDAMUserException | EDAMSystemException e) {
@@ -106,7 +181,7 @@ public final class ClienteEvn {
 	public static Collection<String> consultarAtualizacoes(Usuario usu, Collection<String> clIdsNtbk) throws ErroModelo {
 		try {
 			TreeSet<String> clIdsAtu = new TreeSet<String>();
-			NoteStoreClient noteStore = getNoteStore(usu);
+			NoteStoreClient noteStoreClient = getEstoqueClientes(usu).getNoteStoreClient();
 			SyncState currentSyncState;
 			SyncChunk syncChunk;
 			int contadorBase = usu.getContadorAtualizacao();
@@ -116,14 +191,14 @@ public final class ClienteEvn {
 				clIdsAtu.add(NOTEBOOKS);
 				clIdsAtu.addAll(clIdsNtbk);
 			}
-			synchronized (noteStore) {
-				currentSyncState = noteStore.getSyncState();
+			synchronized (noteStoreClient) {
+				currentSyncState = noteStoreClient.getSyncState();
 			}
 			usu.setContadorAtualizacao(currentSyncState.getUpdateCount());
 			if (!primeiraAtualizacao && contadorBase < usu.getContadorAtualizacao()) {
 				do {
-					synchronized (noteStore) {
-						syncChunk = noteStore.getFilteredSyncChunk(contadorBase, 100, SYNC_FILTER);
+					synchronized (noteStoreClient) {
+						syncChunk = noteStoreClient.getFilteredSyncChunk(contadorBase, 100, SYNC_FILTER);
 					}
 					if (syncChunk.isSetTags()) {
 						clIdsAtu.add(TAGS);
@@ -155,9 +230,9 @@ public final class ClienteEvn {
 	public static List<Tag> consultarTags(Usuario usu) throws ErroModelo {
 		try {
 			List<Tag> lsMtds;
-			NoteStoreClient noteStore = getNoteStore(usu);
-			synchronized (noteStore) {
-				lsMtds = noteStore.listTags();
+			NoteStoreClient noteStoreClient = getEstoqueClientes(usu).getNoteStoreClient();
+			synchronized (noteStoreClient) {
+				lsMtds = noteStoreClient.listTags();
 			}
 			return lsMtds == null ? Collections.emptyList() : new ArrayList<Tag>(lsMtds);
 		} catch (EDAMUserException | EDAMSystemException | TException e) {
@@ -168,9 +243,9 @@ public final class ClienteEvn {
 	public static List<Notebook> consultarNotebooks(Usuario usu) throws ErroModelo {
 		try {
 			List<Notebook> lsMtds;
-			NoteStoreClient noteStore = getNoteStore(usu);
-			synchronized (noteStore) {
-				lsMtds = noteStore.listNotebooks();
+			NoteStoreClient noteStoreClient = getEstoqueClientes(usu).getNoteStoreClient();
+			synchronized (noteStoreClient) {
+				lsMtds = noteStoreClient.listNotebooks();
 			}
 			return lsMtds == null ? Collections.emptyList() : new ArrayList<Notebook>(lsMtds);
 		} catch (EDAMUserException | EDAMSystemException | TException e) {
@@ -181,12 +256,13 @@ public final class ClienteEvn {
 	public static List<NoteMetadata> consultarNotas(Usuario usu, NoteFilter filtro, NotesMetadataResultSpec campos) throws ErroModelo {
 		try {
 			List<NoteMetadata> lsMtds = new ArrayList<NoteMetadata>();
-			NoteStoreClient noteStore = getNoteStore(usu);
+			NoteStoreClient noteStoreClient = getEstoqueClientes(usu).getNoteStoreClient();
 			int desloc = 0;
 			NotesMetadataList lsMtdsPag;
 			do {
-				synchronized (noteStore) {
-					lsMtdsPag = noteStore.findNotesMetadata(filtro, desloc, com.evernote.edam.limits.Constants.EDAM_USER_NOTES_MAX, campos);
+				synchronized (noteStoreClient) {
+					lsMtdsPag = noteStoreClient.findNotesMetadata(filtro, desloc, com.evernote.edam.limits.Constants.EDAM_USER_NOTES_MAX,
+					        campos);
 				}
 				lsMtds.addAll(lsMtdsPag.getNotes());
 				desloc += lsMtdsPag.getNotesSize();
@@ -199,9 +275,9 @@ public final class ClienteEvn {
 
 	public static Note consultarNota(Usuario usu, String id, boolean carregarConteudo) throws ErroModelo {
 		try {
-			NoteStoreClient noteStore = getNoteStore(usu);
-			synchronized (noteStore) {
-				return noteStore.getNote(id, carregarConteudo, false, false, false);
+			NoteStoreClient noteStoreClient = getEstoqueClientes(usu).getNoteStoreClient();
+			synchronized (noteStoreClient) {
+				return noteStoreClient.getNote(id, carregarConteudo, false, false, false);
 			}
 		} catch (TException | EDAMUserException | EDAMSystemException | EDAMNotFoundException e) {
 			throw new ErroModelo("Erro consultando nota no servidor", e);
@@ -210,35 +286,32 @@ public final class ClienteEvn {
 
 	public static Note incluirNota(Usuario usu, Note mtd) throws ErroModelo {
 		try {
-			NoteStoreClient noteStore = getNoteStore(usu);
-			synchronized (noteStore) {
-				return noteStore.createNote(mtd);
+			NoteStoreClient noteStoreClient = getEstoqueClientes(usu).getNoteStoreClient();
+			synchronized (noteStoreClient) {
+				return noteStoreClient.createNote(mtd);
 			}
 		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
 			throw new ErroModelo("Erro incluindo nota no servidor", e);
 		}
 	}
 
-	public static void atualizarNota(Usuario usu, Note mtd) throws ErroModelo {
-		try {
-			NoteStoreClient noteStore = getNoteStore(usu);
-			synchronized (noteStore) {
-				noteStore.updateNote(mtd);
-			}
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
-			throw new ErroModelo("Erro alterando nota no servidor", e);
-		}
-	}
-
 	public static void excluirNota(Usuario usu, String id) throws ErroModelo {
-		try {
-			NoteStoreClient noteStore = getNoteStore(usu);
-			synchronized (noteStore) {
-				noteStore.deleteNote(id);
+		getEstoqueClientes(usu).getCliente().executar((NoteStoreClient noteStoreClient) -> {
+			try {
+				noteStoreClient.deleteNote(id);
+			} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
+				LogManager.getLogger(ClienteEvn.class).error(new ErroModelo("Erro excluindo nota no servidor", e));
 			}
-		} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
-			throw new ErroModelo("Erro excluindo nota no servidor", e);
-		}
+		});
 	}
 
+	public static void atualizarNota(Usuario usu, Note mtd) throws ErroModelo {
+		getEstoqueClientes(usu).getCliente().executar((NoteStoreClient noteStoreClient) -> {
+			try {
+				noteStoreClient.updateNote(mtd);
+			} catch (EDAMUserException | EDAMSystemException | EDAMNotFoundException | TException e) {
+				LogManager.getLogger(ClienteEvn.class).error(new ErroModelo("Erro alterando nota no servidor", e));
+			}
+		});
+	}
 }

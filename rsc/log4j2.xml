@@ -13,16 +13,19 @@
 		</Console>
 	</Appenders>
 	<Loggers>
-		<!-- <Logger name="meyn.cevn.controle.Console" level="trace" additivity="false"> 
-<<<<<<< HEAD
-			<AppenderRef ref="Evernote" /> </Logger> <Logger name="meyn.cevn.modelo.sumario" 
-=======
-			<AppenderRef ref="Evernote" /> </Logger> <Logger name="meyn.cevn.modelo.referencia" 
->>>>>>> refs/remotes/origin/master
-			level="debug" additivity="false"> <AppenderRef ref="Evernote" /> </Logger> 
-			<Logger name="meyn.cevn.modelo.sumario" level="debug" additivity="false"> 
-			<AppenderRef ref="Evernote" /> </Logger> <Logger name="meyn.cevn.controle.Console" 
-			level="trace" additivity="false"> <AppenderRef ref="Evernote" /> </Logger> -->
+		<!-- 
+		<Logger name="meyn.cevn.controle.Console" level="trace"
+			additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="meyn.cevn.modelo.sumario" level="trace"
+			additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		-->
+		<Logger name="meyn.cevn.controle.RemovedorContexto" level="info" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
 		<Logger name="meyn" level="info" additivity="false">
 			<AppenderRef ref="Evernote" />
 		</Logger>

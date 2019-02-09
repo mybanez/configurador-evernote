@@ -93,6 +93,10 @@ public class CadastroLog extends CadastroNota<Nota> {
 					if (log != null) {
 						cadLog.getLogger().debug("Thread do appender iniciado: {}", log.getNome());
 						while (logAtivo) {
+							try {
+								Thread.sleep(intervaloAtualizacao * 1000);
+							} catch (InterruptedException e) {
+							}
 							if (logAtualizado) {
 								try {
 									log.setConteudo(cadLog.contentToString(conteudoLog));
@@ -101,10 +105,6 @@ public class CadastroLog extends CadastroNota<Nota> {
 								} catch (ErroModelo e) {
 									cadLog.getLogger().error("Erro escrevendo no log: ", e);
 								}
-							}
-							try {
-								Thread.sleep(intervaloAtualizacao * 1000);
-							} catch (InterruptedException e) {
 							}
 						}
 					}
@@ -194,7 +194,7 @@ public class CadastroLog extends CadastroNota<Nota> {
 
 	//// GERAÇÃO DE ENML ////
 
-	static final String TEXT_STYLE = "font-family: Courier New; font-size: 10pt;";
+	private static final String TEXT_STYLE = "font-family: Courier New; font-size: 10pt;";
 
 	private void gerarMensagemInativo(Nota log) {
 		StringBuffer cont = new StringBuffer();

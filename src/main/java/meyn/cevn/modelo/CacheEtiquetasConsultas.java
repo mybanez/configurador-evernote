@@ -46,7 +46,7 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public CacheEntidadesEvn<?> get(Usuario usu, CacheEntidadesConsultas.InfoConsulta<?, ?> infoConsulta) throws ErroModelo {
+	protected CacheEntidadesEvn<?> get(Usuario usu, CacheEntidadesConsultas.InfoConsulta<?, ?> infoConsulta) throws ErroModelo {
 		InfoConsulta<Etiqueta> infoConsultaEtqs = (InfoConsulta<Etiqueta>) infoConsulta;
 		try {
 			String chave = infoConsultaEtqs.getChaveCache();
@@ -78,6 +78,7 @@ public class CacheEtiquetasConsultas extends CacheEntidadesConsultas {
 						cacheEtqs.put(tag.getGuid(), etq);
 					}
 				}
+				cacheEtqs.executarPosCarregamento();
 				// Status deve mudar antes de carregar relacionamentos para não gerar
 				// atualização recursiva
 				cacheEtqs.setAtualizado(true);
