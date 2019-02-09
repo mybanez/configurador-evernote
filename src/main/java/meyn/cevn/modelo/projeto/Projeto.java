@@ -3,6 +3,7 @@ package meyn.cevn.modelo.projeto;
 import java.util.Collection;
 
 import meyn.cevn.modelo.Etiqueta;
+import meyn.cevn.modelo.Grupo;
 import meyn.cevn.modelo.Nota;
 import meyn.cevn.modelo.acao.Acao;
 import meyn.cevn.modelo.interesse.Interesse;
@@ -38,6 +39,10 @@ public interface Projeto extends Nota {
 	Collection<Referencia> getReferencias();
 
 	void setReferencias(Collection<Referencia> clReferencias);
+
+	Grupo<Referencia> getReferenciasPorFormato();
+
+	void setReferenciasPorFormato(Grupo<Referencia> clReferencias);
 
 	Sumario getSumario();
 

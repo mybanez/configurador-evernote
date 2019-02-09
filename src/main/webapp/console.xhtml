@@ -7,22 +7,17 @@
 </h:head>
 <h:body>
 	<script type="text/javascript" src="/console.js" />
-	<h:inputHidden id="resultado"
+	<h:inputHidden id="resultadoParam"
 		rendered="${not empty param.sumario ? true : false}"
 		value="${console.resultadoGeracaoSumariosParametro}">
-<<<<<<< HEAD
 	</h:inputHidden>
 	<script type="text/javascript">
-		testarResultadoOperacao();
+		testarResultadoGeracaoSumariosParametro();
 	</script>
-=======
-		<script type="text/javascript">
-			testarResultadoOperacao();
-		</script>
-	</h:inputHidden>
->>>>>>> refs/remotes/origin/master
 	<div class="ui-painel-overlay" id="painelImgProc">
-		<h:graphicImage id="imgProc" value="/Processando.gif"></h:graphicImage>
+		<h:graphicImage id="imgProc"
+			rendered="${empty param.sumario ? true : false}"
+			value="/Processando.gif"></h:graphicImage>
 	</div>
 	<h:panelGrid columns="2" styleClass="ui-cabecalho-cevn"
 		columnClasses="ui-cabecalho-col1-cevn,ui-cabecalho-col2-cevn">
@@ -40,146 +35,168 @@
 		</h:panelGroup>
 		<h:panelGroup rendered="${empty param.sumario ? true : false}">
 			<h:form id="console">
-				<h:panelGrid id="tab_input" columns="4" styleClass="ui-console-cevn"
-					columnClasses="ui-console-col-cevn,ui-console-col-cevn,ui-console-col-cevn,ui-console-col-cevn">
+				<h:panelGrid id="tab_input" columns="4" styleClass="ui-opcoes-cevn"
+					columnClasses="ui-opcoes-col-cevn,ui-opcoes-col-cevn,ui-opcoes-col-cevn,ui-opcoes-col-cevn">
 					<f:facet name="header">
 						<h:panelGroup>
-							<h:panelGrid styleClass="ui-console-cab-cevn" columns="3"
-								columnClasses="ui-console-cab-col-cevn,ui-console-cab-col-cevn,ui-console-cab-col-cevn">
+							<h:panelGrid styleClass="ui-opcoes-cab-cevn" columns="5"
+								columnClasses="ui-opcoes-cab-col-cevn,ui-opcoes-cab-col-cevn,ui-opcoes-cab-col-cevn,ui-opcoes-cab-col-cevn,ui-opcoes-cab-col-cevn">
 								<h:panelGroup>
-									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
+									<h:selectBooleanCheckbox selected="true" onclick="trocarCheckBoxes(this)"
 										id="chk" />
 									Todos
 								</h:panelGroup>
 								<h:panelGroup>
 									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
-										id="chkSum" />
-									Sumários
+										id="chkSumCol" />
+									Sumários coletivos
 								</h:panelGroup>
 								<h:panelGroup>
 									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
-										id="chkVal" />
-									Validações
+										id="chkSumInd" />
+									Sumários individuais
+								</h:panelGroup>
+								<h:panelGroup>
+									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
+										id="chkValCol" />
+									Validações coletivas
+								</h:panelGroup>
+								<h:panelGroup>
+									<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this)"
+										id="chkValInd" />
+									Validações individuais
 								</h:panelGroup>
 							</h:panelGrid>
 						</h:panelGroup>
 					</f:facet>
-					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+					<h:panelGroup styleClass="ui-opcoes-cab-texto-cevn">
 						<h:selectBooleanCheckbox
 							onclick="trocarCheckBoxes(this,'Interesses')" id="chkInteresses" />
 							Interesses
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+					<h:panelGroup styleClass="ui-opcoes-cab-texto-cevn">
 						<h:selectBooleanCheckbox
 							onclick="trocarCheckBoxes(this,'Projetos')" id="chkProjetos" />
 							Projetos
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+					<h:panelGroup styleClass="ui-opcoes-cab-texto-cevn">
 						<h:selectBooleanCheckbox onclick="trocarCheckBoxes(this,'Acoes')"
 							id="chkAcoes" />
 							Ações
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-cab-texto-cevn">
+					<h:panelGroup styleClass="ui-opcoes-cab-texto-cevn">
 						<h:selectBooleanCheckbox
 							onclick="trocarCheckBoxes(this,'Referencias')"
 							id="chkReferencias" />
 							Referências
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-texto-cevn">
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn">
 						<div>
-							<h:selectBooleanCheckbox id="chkSumInteressesCol"
-								value="#{console.gerarSumInteressesCol}" />
+							<h:selectBooleanCheckbox id="chkSumColInteresses"
+								value="#{console.gerarSumColInteresses}" />
 							Sumários coletivos
 						</div>
 						<div>
-							<h:selectBooleanCheckbox id="chkSumInteressesInd"
-								value="#{console.gerarSumInteressesInd}" />
+							<h:selectBooleanCheckbox id="chkSumIndInteresses"
+								value="#{console.gerarSumIndInteresses}" />
 							Sumários individuais
 						</div>
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-texto-cevn">
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn">
 						<div>
-							<h:selectBooleanCheckbox id="chkSumProjetosCol"
-								value="#{console.gerarSumProjetosCol}" />
+							<h:selectBooleanCheckbox id="chkSumColProjetos"
+								value="#{console.gerarSumColProjetos}" />
 							Sumários coletivos
 						</div>
 						<div>
-							<h:selectBooleanCheckbox id="chkSumProjetosInd"
-								value="#{console.gerarSumProjetosInd}" />
+							<h:selectBooleanCheckbox id="chkSumIndProjetos"
+								value="#{console.gerarSumIndProjetos}" />
 							Sumários individuais
 						</div>
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-texto-cevn">
-						<h:selectBooleanCheckbox id="chkSumAcoesCol"
-							value="#{console.gerarSumAcoesCol}" />
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn">
+						<h:selectBooleanCheckbox id="chkSumColAcoes"
+							value="#{console.gerarSumColAcoes}" />
 							Sumários coletivos
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-texto-cevn">
-						<h:selectBooleanCheckbox id="chkSumReferenciasCol"
-							value="#{console.gerarSumReferenciasCol}" />
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn">
+						<h:selectBooleanCheckbox id="chkSumColReferencias"
+							value="#{console.gerarSumColReferencias}" />
 							Sumários coletivos
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-texto-cevn" />
-					<h:panelGroup styleClass="ui-console-texto-cevn">
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn" />
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn">
 						<div>
-							<h:selectBooleanCheckbox id="chkValProjetosCol"
-								value="#{console.gerarValProjetosCol}" />
+							<h:selectBooleanCheckbox id="chkValColProjetos"
+								value="#{console.gerarValColProjetos}" />
 							Validações coletivas
 						</div>
 						<div>
-							<h:selectBooleanCheckbox id="chkValProjetosInd"
-								value="#{console.gerarValProjetosInd}" />
+							<h:selectBooleanCheckbox id="chkValIndProjetos"
+								value="#{console.gerarValIndProjetos}" />
 							Validações individuais
 						</div>
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-texto-cevn">
-						<h:selectBooleanCheckbox id="chkValAcoesCol"
-							value="#{console.gerarValAcoesCol}" />
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn">
+						<h:selectBooleanCheckbox id="chkValColAcoes"
+							value="#{console.gerarValColAcoes}" />
 							Validações coletivas
 					</h:panelGroup>
-					<h:panelGroup styleClass="ui-console-texto-cevn">
-						<h:selectBooleanCheckbox id="chkValReferenciasCol"
-							value="#{console.gerarValReferenciasCol}" />
+					<h:panelGroup styleClass="ui-opcoes-texto-cevn">
+						<h:selectBooleanCheckbox id="chkValColReferencias"
+							value="#{console.gerarValColReferencias}" />
 							Validações coletivas
 					</h:panelGroup>
 					<f:facet name="footer">
-						<div class="ui-console-rod-cevn">
-							<p:commandButton onstart="ligarAtualizadorTela()" async="true"
-								process="@form" update="paineis:console"
+						<div class="ui-opcoes-rod-cevn">
+							<p:commandButton id="btGerar" value="Gerar Sumários"
+								styleClass="ui-opcoes-botao-cevn"
+								onstart="ligarAtualizadorTela()" async="true" process="@form"
 								actionListener="#{console.gerarSumarios}"
-								value="Gerar Sumários" style="font-size: 12pt;" id="btGerar" />
-							<p:poll oncomplete="desligarAtualizadorTela()"
-								id="atualizadorTela" widgetVar="atualizadorTela" async="true"
-								autoStart="false" interval="3" process="@none"
-								update="paineis:console paineis:sumarios:tabela paineis:logs:tabela" />
+								update="paineis:console">
+								<f:param name="estrategiaCarregamento" value="2" />
+							</p:commandButton>
 						</div>
 					</f:facet>
 				</h:panelGrid>
 			</h:form>
+		<script type="text/javascript">
+			trocarCheckBoxes(document.getElementById('console:chk'));
+		</script>
 		</h:panelGroup>
 	</h:panelGrid>
 	<br />
+	<h:form id="atualizador"
+		rendered="${empty param.sumario ? true : false}">
+		<p:poll id="atualizadorTela" widgetVar="atualizadorTela"
+			oncomplete="desligarAtualizadorTela()" autoStart="true" async="true"
+			immediate="true" interval="3" process="@form"
+			update="paineis:console paineis:sumarios paineis:interesses paineis:projetos paineis:acoes paineis:referencias paineis:logs" />
+	</h:form>
 	<p:tabView styleClass="ui-paineis" id="paineis">
 		<p:tab title="Console">
 			<h:form id="console">
 				<p:growl widgetVar="mensagem" showDetail="true" />
-				<h:inputHidden id="processos" readonly="true"
-					value="${console.contadorProcessos}" />
-				<h:inputHidden id="status" readonly="true"
-					value="${console.statusProcessamento}" />
+				<h:inputHidden id="processando" readonly="true"
+					value="${console.processando}" />
+				<h:inputHidden id="resultado" readonly="true"
+					value="${console.resultadoProcessamento}" />
 				<h:panelGrid columns="3"
 					columnClasses="ui-saida-tempo-cevn,ui-saida-limpar-cevn,ui-saida-log-cevn"
 					style="width: 100%;">
-					<h:panelGroup style="width: 100%;">Última execução: <h:outputText
+					<h:panelGroup style="width: 100%;">Fila: <h:outputText
+							id="tamanhoFila" value="#{console.tamanhoFilaServidor}" /> / Duração: <h:outputText
 							id="tempo" value="#{console.tempoProcessamento}" />
 					</h:panelGroup>
 					<h:panelGroup style="width: 100%;">
-						<p:commandButton style="font-size: 9pt;"
+						<p:commandButton rendered="${empty param.sumario ? true : false}"
+							id="btLimpar" value="Limpar" styleClass="ui-saida-botao-cevn"
 							onstart="mostrarImagemProcessando(true)"
 							oncomplete="mostrarImagemProcessando(false)" async="true"
-							rendered="${empty param.sumario ? true : false}" process="@this"
-							update="paineis:console" actionListener="#{console.limparSaida}"
-							id="btLimpar" value="Limpar" />
+							process="@this" actionListener="#{console.limparConsole}"
+							update="paineis:console">
+							<f:param name="estrategiaCarregamento" value="5" />
+						</p:commandButton>
 					</h:panelGroup>
 					<h:panelGroup style="width: 100%;">
 						<h:outputLink class="ui-link-cevn-2" value="#{console.urlLog}">Log da sessão</h:outputLink>
@@ -212,24 +229,32 @@
 				</h:panelGrid>
 			</h:form>
 		</p:tab>
-		<p:tab title="Sumários"
+		<p:tab id="tab-sumarios" title="Sumários"
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="sumarios">
+				<h:inputHidden id="titulo" value="${console.tituloSumarios}" />
+				<script type="text/javascript">
+					atualizarTituloPainel('sumarios');
+				</script>
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton onstart="mostrarImagemProcessando(true)"
-						oncomplete="mostrarImagemProcessando(false)" async="true"
-						process="@this" update="paineis:sumarios" value="Recarregar"
-						style="font-size: 10pt;" id="btRecarregarSums">
-						<f:param name="forcarCarregamento" value="true" />
+					<p:commandButton id="btRecarregarSums" value="Recarregar"
+						onstart="ligarAtualizadorTela()" async="true" process="@this"
+						update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="1" />
 					</p:commandButton>
-					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
-						process="@this" update="paineis:console"
-						actionListener="#{console.forcarConsistenciaSumarios}" value="Forçar Consistência"
-						style="font-size: 10pt;" id="btForcarConsistenciaSums" />
-					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
-						process="@this" update="paineis:console"
-						actionListener="#{console.excluirSumarios}" value="Excluir Todos"
-						style="font-size: 10pt;" id="btExcluirSums" />
+					<p:commandButton id="btVerificarConsistenciaSums"
+						value="Verificar Consistência" onstart="ligarAtualizadorTela()"
+						async="true" process="@this"
+						actionListener="#{console.verificarConsistenciaSumarios}"
+						update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="2" />
+					</p:commandButton>
+					<p:commandButton id="btExcluirSums" value="Excluir Todos"
+						onstart="ligarAtualizadorTela()" async="true" process="@this"
+						actionListener="#{console.excluirSumarios}"
+						update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="2" />
+					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="sum" value="#{console.sumarios}"
 					filteredValue="#{console.sumariosFiltrado}" rows="10"
@@ -258,15 +283,18 @@
 				</p:dataTable>
 			</h:form>
 		</p:tab>
-		<p:tab title="Interesses"
+		<p:tab id="tab-interesses" title="Interesses"
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="interesses">
+				<h:inputHidden id="titulo" value="${console.tituloInteresses}" />
+				<script type="text/javascript">
+					atualizarTituloPainel('interesses');
+				</script>
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton onstart="mostrarImagemProcessando(true)"
-						oncomplete="mostrarImagemProcessando(false)" async="true"
-						process="@this" update="paineis:interesses" value="Recarregar"
-						style="font-size: 10pt;" id="btRecarregarIntrs">
-						<f:param name="forcarCarregamento" value="true" />
+					<p:commandButton id="btRecarregarIntrs" value="Recarregar"
+						onstart="ligarAtualizadorTela()" async="true" process="@this"
+						update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="1" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="intr" value="#{console.interesses}"
@@ -287,15 +315,18 @@
 				</p:dataTable>
 			</h:form>
 		</p:tab>
-		<p:tab title="Projetos"
+		<p:tab id="tab-projetos" title="Projetos"
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="projetos">
+				<h:inputHidden id="titulo" value="${console.tituloProjetos}" />
+				<script type="text/javascript">
+					atualizarTituloPainel('projetos');
+				</script>
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton onstart="mostrarImagemProcessando(true)"
-						oncomplete="mostrarImagemProcessando(false)" async="true"
-						process="@this" update="paineis:projetos" value="Recarregar"
-						style="font-size: 10pt;" id="btRecarregarProjs">
-						<f:param name="forcarCarregamento" value="true" />
+					<p:commandButton id="btRecarregarProjs" value="Recarregar"
+						onstart="ligarAtualizadorTela()" async="true" process="@this"
+						update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="1" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="proj" value="#{console.projetos}"
@@ -315,14 +346,18 @@
 				</p:dataTable>
 			</h:form>
 		</p:tab>
-		<p:tab title="Ações" rendered="${empty param.sumario ? true : false}">
+		<p:tab id="tab-acoes" title="Ações"
+			rendered="${empty param.sumario ? true : false}">
 			<h:form id="acoes">
+				<h:inputHidden id="titulo" value="${console.tituloAcoes}" />
+				<script type="text/javascript">
+					atualizarTituloPainel('acoes');
+				</script>
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton onstart="mostrarImagemProcessando(true)"
-						oncomplete="mostrarImagemProcessando(false)" async="true"
-						process="@this" update="paineis:acoes" value="Recarregar"
-						style="font-size: 10pt;" id="btRecarregarAcoes">
-						<f:param name="forcarCarregamento" value="true" />
+					<p:commandButton id="btRecarregarAcoes" value="Recarregar"
+						onstart="ligarAtualizadorTela()" async="true" process="@this"
+						update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="1" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="acao" value="#{console.acoes}"
@@ -342,15 +377,18 @@
 				</p:dataTable>
 			</h:form>
 		</p:tab>
-		<p:tab title="Referências"
+		<p:tab id="tab-referencias" title="Referências"
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="referencias">
+				<h:inputHidden id="titulo" value="${console.tituloReferencias}" />
+				<script type="text/javascript">
+					atualizarTituloPainel('referencias');
+				</script>
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton onstart="mostrarImagemProcessando(true)"
-						oncomplete="mostrarImagemProcessando(false)" async="true"
-						process="@this" update="paineis:referencias" value="Recarregar"
-						style="font-size: 10pt;" id="btRecarregarRefs">
-						<f:param name="forcarCarregamento" value="true" />
+					<p:commandButton id="btRecarregarRefs" value="Recarregar"
+						onstart="ligarAtualizadorTela()" async="true" process="@this"
+						update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="1" />
 					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="ref" value="#{console.referencias}"
@@ -374,11 +412,11 @@
 			rendered="${empty param.sumario ? true : false}">
 			<h:form id="logs">
 				<div class="ui-painel-cab-cevn">
-					<p:commandButton onstart="ligarAtualizadorTela()" async="true"
-						process="@this" update="paineis:logs"
-						actionListener="#{console.excluirLogs}"
-						value="Excluir Logs Antigos" style="font-size: 10pt;"
-						id="btExcluirLogs" />
+					<p:commandButton id="btExcluirLogs" value="Excluir Logs Antigos"
+						onstart="ligarAtualizadorTela()" async="true" process="@this"
+						actionListener="#{console.excluirLogs}" update="paineis:console">
+						<f:param name="estrategiaCarregamento" value="2" />
+					</p:commandButton>
 				</div>
 				<p:dataTable id="tabela" var="log" value="#{console.logs}" rows="10"
 					paginator="true" emptyMessage="Lista de logs vazia"

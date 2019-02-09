@@ -9,25 +9,16 @@ import meyn.util.contexto.ErroContextoJaDefinido;
 @SuppressWarnings("serial")
 public class ContextoEvn extends ContextoEmMemoria {
 
-	public static final String URL_APLICACAO = "https://configurador-evernote.appspot.com/";
-
-	private static final String CONTEXTO_LOCAL = "CONTEXTO_LOCAL: ";
-	private static final String CONTEXTO_SESSAO = "CONTEXTO_SESSAO: ";
-
 	static {
 		Locale.setDefault(new Locale("pt", "BR"));
 	}
 
-	public static ContextoEvn getContextoLocal(String id) {
-		return (ContextoEvn) buscar(CONTEXTO_LOCAL + id);
+	public static ContextoEvn getContexto(String id) {
+		return (ContextoEvn) buscar(id);
 	}
 
-	public static void removerContextoLocal(String id) {
-		remover(CONTEXTO_LOCAL + id);
-	}
-
-	public static ContextoEvn getContextoLocal(Usuario usu) {
-		String chave = CONTEXTO_LOCAL + usu.getId();
+	public static ContextoEvn getContexto(Usuario usu) {
+		String chave = usu.getId();
 		if (!isDefinido(chave)) {
 			try {
 				definir(chave, new ContextoEvn(usu));
@@ -42,55 +33,26 @@ public class ContextoEvn extends ContextoEmMemoria {
 		return (ContextoEvn) buscar(chave);
 	}
 
-	public static void removerContextoLocal(Usuario usu) {
-		removerContextoLocal(usu.getId());
+	public static void remover(Usuario usu) {
+		remover(usu.getId());
 	}
 
-	public static ContextoEvn getContextoSessao(Usuario usu) {
-		String chave = CONTEXTO_SESSAO + usu.getId();
-		if (!isDefinido(chave)) {
-			try {
-				ContextoEvn contexto = usu.getContexto();
-				if (contexto == null) {
-					contexto = new ContextoEvn(usu);
-				}
-				definir(chave, contexto);
-				usu.setContexto(contexto);
-			} catch (ErroContextoJaDefinido e) {
-				/*
-				 * Erro pode acontecer por concorrência. Estratégia é não sincronizar para
-				 * ganhar performance, assumindo que este contexto seja definido uma única vez
-				 * para o usuário.
-				 */
-			}
-		}
-		return (ContextoEvn) buscar(chave);
-	}
-
-	public static ContextoEvn getContexto(String id) {
-		return getContextoLocal(id);
-	}
-
-	public static ContextoEvn getContexto(Usuario usu) {
-		return getContextoLocal(usu);
-	}
-
-	public static void removerContexto(String id) {
-		removerContextoLocal(id);
-	}
-
-	public static void removerContexto(Usuario usu) {
-		removerContextoLocal(usu);
-	}
-
-	private Usuario usuario;
+	private static final String USUARIO = "USUARIO";
+	private static final String URL_GERACAO = "URL_GERACAO";
 
 	private ContextoEvn(Usuario usuario) {
-		super();
-		this.usuario = usuario;
+		put(USUARIO, usuario);
 	}
 
 	public Usuario getUsuario() {
-		return usuario;
+		return (Usuario) get(USUARIO);
+	}
+
+	public String getURLGeracao() {
+		return (String) get(URL_GERACAO);
+	}
+
+	public void setURLGeracao(String urlGeracao) {
+		put(URL_GERACAO, urlGeracao);
 	}
 }

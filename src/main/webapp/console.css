@@ -1,7 +1,7 @@
 @charset "ISO-8859-1";
 
-.ui-logo-texto-cevn, .ui-console-cab-col-cevn,
-	.ui-console-cab-texto-cevn, a.ui-link-cevn-1, a.ui-link-cevn-2 {
+.ui-logo-texto-cevn, .ui-opcoes-cab-col-cevn,
+	.ui-opcoes-cab-texto-cevn, a.ui-link-cevn-1, a.ui-link-cevn-2 {
 	color: rgb(65, 173, 28);
 }
 
@@ -33,43 +33,48 @@
 	width: 250px;
 }
 
-.ui-console-cevn {
+.ui-opcoes-cevn {
 	width: 100%;
 	border: 1px solid black;
 }
 
-.ui-console-col-cevn {
+.ui-opcoes-col-cevn {
 	width: 25%;
 	border-bottom: 1px solid #ddd;
 	border-right: 1px solid #ddd;
 }
 
-.ui-console-cab-cevn {
+.ui-opcoes-cab-cevn {
 	width: 100%;
 	border-bottom: 1px solid #ddd;
 	text-align: center;
 }
 
-.ui-console-cab-col-cevn, .ui-console-cab-texto-cevn {
+.ui-opcoes-cab-col-cevn, .ui-opcoes-cab-texto-cevn {
 	font-family: Arial;
 	font-size: 11pt;
 	font-weight: bold;
 	text-align: center;
 }
 
-.ui-console-cab-col-cevn {
-	width: 33%;
+.ui-opcoes-cab-col-cevn {
+	width: 20%;
+	text-align: left;
 }
 
-.ui-console-texto-cevn {
+.ui-opcoes-texto-cevn {
 	font-family: Arial;
 	font-size: 10pt;
 }
 
-.ui-console-rod-cevn {
+.ui-opcoes-rod-cevn {
 	width: 100%;
 	padding: 10px;
 	text-align: center;
+}
+
+.ui-opcoes-botao-cevn .ui-button-text {
+	font-size: 12pt;
 }
 
 .ui-saida-tempo-cevn {
@@ -81,6 +86,10 @@
 .ui-saida-limpar-cevn {
 	width: 20%;
 	text-align: center;
+}
+
+.ui-saida-botao-cevn .ui-button-text {
+	font-size: 9pt;
 }
 
 .ui-saida-log-cevn {
@@ -105,7 +114,7 @@
 
 .ui-painel-overlay {
 	position: fixed;
-	display: none;
+	display: block;
 	top: 2.2%;
 	left: 95.5%;
 	background-color: rgba(255, 255, 255, 1);
@@ -113,6 +122,10 @@
 	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0
 		rgba(0, 0, 0, 0.19);
 	z-index: 10;
+}
+
+.ui-button-text {
+	font-size: 10pt;
 }
 
 .ui-state-hover, .ui-widget-content .ui-state-hover, .ui-widget-header .ui-state-hover,

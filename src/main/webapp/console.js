@@ -1,5 +1,5 @@
-function testarResultadoOperacao() {
-	var res = document.getElementById('resultado');
+function testarResultadoGeracaoSumariosParametro() {
+	var res = document.getElementById('resultadoParam');
 	if (res != null && res.value == 'ok') {
 		alert('Sumário(s) gerado(s) com sucesso!');
 		close();
@@ -30,6 +30,12 @@ function mostrarImagemProcessando(mostrar) {
 	painel.style.display = (mostrar ? 'block' : 'none');
 }
 
+function atualizarTituloPainel(nome) {
+	var tabs = document.querySelectorAll("a[href='#paineis:tab-"+nome+"']");
+	var qtd = document.getElementById('paineis:'+nome+':titulo');
+	tabs[0].innerHTML = qtd.value;
+}
+
 function ligarAtualizadorTela() {
 	desativarBotoes(true);
 	mostrarImagemProcessando(true);
@@ -37,15 +43,15 @@ function ligarAtualizadorTela() {
 }
 
 function desligarAtualizadorTela() {
-	var processos = document.getElementById('paineis:console:processos');
+	var processando = document.getElementById('paineis:console:processando');
 	var saida = document.getElementById('paineis:console:saida:padrao');
-	if (processos.value == 0 && saida.innerHTML.indexOf('PROCESSO FINALIZADO') == -1) {
+	if (processando.value == 'false') {
 		PF('atualizadorTela').stop();
 		mostrarImagemProcessando(false);
 		desativarBotoes(false);
-		var status = document.getElementById('paineis:console:status');
+		var resultado = document.getElementById('paineis:console:resultado');
 		var msgSumario, msgDetalhe, msgSeveridade;
-		if (status.value == 'ok') {
+		if (resultado.value == 'ok') {
 			msgSumario = 'Sucesso!';
 			msgDetalhe = 'Processamento finalizado';
 			msgSeveridade = 'info';

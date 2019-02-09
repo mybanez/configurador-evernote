@@ -7,7 +7,7 @@
 </head>
 
 <body>
-	<% response.sendRedirect("/faces/console.xhtml"); %>
+	<% response.sendRedirect("/faces/console.xhtml?estrategiaCarregamento=0"); %>
 </body>
 
 </html>

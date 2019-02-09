@@ -20,32 +20,31 @@ abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheEntidadesEv
 			Grupo<TipoEtq> grupo, subgrupo;
 			CacheTags cacheTag = CacheTags.getCache(getUsuario());
 			for (TipoEtq etq : CacheEtiquetas.this.values()) {
-				subgrupo = null;
-				Tag tag = etq.getMetadado();
-				while (tag.isSetParentGuid()) {
-					tag = cacheTag.get(tag.getParentGuid());
-					String idGrupo = tag.getGuid();
-					String nomeGrupo = tag.getName();
-					grupo = getOrDefault(idGrupo, new Grupo<TipoEtq>(nomeGrupo));
-					if (grupo.isVazio()) {
-						put(idGrupo, grupo);
-						put(nomeGrupo, grupo);
-					}
-					if (subgrupo != null) {
-						grupo.getGruposFilho().add(subgrupo);
-						etq = subgrupo.getEntidade();
-						if (etq != null) {
-							grupo.getEntidadesFilho().remove(etq);
+				// Não representa um grupo já inserido no cache
+				if (!containsKey(etq.getId())) {
+					subgrupo = null;
+					Tag tag = etq.getMetadado();
+					while (tag.isSetParentGuid()) {
+						tag = cacheTag.get(tag.getParentGuid());
+						String idGrupo = tag.getGuid();
+						String nomeGrupo = tag.getName();
+						grupo = getOrDefault(idGrupo, new Grupo<TipoEtq>(nomeGrupo, CacheEtiquetas.this.get(idGrupo)));
+						if (grupo.isVazio()) {
+							put(idGrupo, grupo);
+							put(nomeGrupo, grupo);
 						}
-					} else {
-						String id = etq.getId();
-						if (containsKey(id)) {
-							get(id).setEntidade(etq);
+						if (subgrupo != null) {
+							grupo.getGruposFilho().add(subgrupo);
+							etq = subgrupo.getEntidade();
+							// Além de entidade, representa um grupo
+							if (etq != null) {
+								grupo.getEntidadesFilho().remove(etq);
+							}
 						} else {
 							grupo.getEntidadesFilho().add(etq);
 						}
+						subgrupo = grupo;
 					}
-					subgrupo = grupo;
 				}
 			}
 		}
@@ -72,29 +71,21 @@ abstract class CacheEtiquetas<TipoEtq extends Etiqueta> extends CacheEntidadesEv
 		}
 	}
 
-	private CachePorGrupo cacheGrupo = null;
-	private CachePorRepositorio cacheRepo = null;
+	private CachePorGrupo cacheGrupo;
+	private CachePorRepositorio cacheRepo;
 
-	// Para garantir consistência, só deve ser chamado em CacheEtiquetasConsultas
-	@Override
-	public void clear() {
-		super.clear();
-		cacheRepo = null;
+	protected void executarPosCarregamento() throws ErroModelo {
+		cacheGrupo = new CachePorGrupo();
+		cacheRepo = new CachePorRepositorio();
 	}
 
 	@Override
 	public Grupo<TipoEtq> consultarPorGrupo(String nomeGrupo) throws ErroModelo {
-		if (cacheGrupo == null) {
-			cacheGrupo = new CachePorGrupo();
-		}
 		return cacheGrupo.getOrDefault(nomeGrupo, new Grupo<TipoEtq>(nomeGrupo));
 	}
 
 	@Override
 	public Collection<TipoEtq> consultarPorRepositorio(String nomeRepositorio) throws ErroModelo {
-		if (cacheRepo == null) {
-			cacheRepo = new CachePorRepositorio();
-		}
 		return new ArrayList<TipoEtq>(cacheRepo.getOrDefault(nomeRepositorio, Collections.emptySortedSet()));
 	}
 }

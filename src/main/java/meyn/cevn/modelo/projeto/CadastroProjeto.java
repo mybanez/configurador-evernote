@@ -63,10 +63,11 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 
 		// Interesses
 		CadastroInteresse cadIntr = getCadastro(ChavesModelo.INTERESSE);
-		Collection<Interesse> clIntrs = new ArrayList<Interesse>();
+		List<Interesse> clIntrs = new ArrayList<Interesse>();
 		for (String id : lsIdsTag) {
 			clIntrs.add(cadIntr.consultarPorNome(usu, cacheTag.get(id).getName()));
 		}
+		Collections.sort(clIntrs, (a, b) -> a.getNome().compareTo(b.getNome()));
 		proj.setInteresses(clIntrs);
 		// Ações
 		CadastroAcao cadAcao = getCadastro(ChavesModelo.ACAO);
@@ -81,6 +82,7 @@ public class CadastroProjeto extends CadastroNota<Projeto> {
 		// Referências
 		CadastroReferencia cadRef = getCadastro(ChavesModelo.REFERENCIA);
 		proj.setReferencias(cadRef.consultarPorFiltro(usu, (Predicate<Referencia>) ehDoProjeto));
+		proj.setReferenciasPorFormato(cadRef.consultarPorGrupo(usu, "<Formato>").filtrar((Predicate<Referencia>) ehDoProjeto));
 		// Sumários
 		CadastroSumario cadSum = getCadastro(ChavesModelo.SUMARIO);
 		try {

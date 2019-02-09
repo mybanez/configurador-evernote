@@ -84,12 +84,16 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 	}
 
 	public Grupo<TipoEnt> consultarTodosPorGrupos(Usuario usu) throws ErroCadastro {
+		return consultarPorGrupo(usu, nomeGrupo);
+	}
+
+	public Grupo<TipoEnt> consultarPorGrupo(Usuario usu, String nomeGrupo) throws ErroCadastro {
 		try {
 			return getCache(usu).consultarPorGrupo(nomeGrupo);
 		} catch (ErroItemNaoEncontrado e) {
 			throw e;
 		} catch (ErroModelo e) {
-			throw new ErroCadastro("Erro consultando itens.", e);
+			throw new ErroCadastro("Erro consultando itens por grupo: " + nomeGrupo, e);
 		}
 	}
 
@@ -121,7 +125,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 			Collection<TipoEnt> clEnts = consultarTodos(usu);
 			return clEnts;
 		} catch (ErroModelo e) {
-			throw new ErroCadastro("Erro validando itens: " + e, e);
+			throw new ErroCadastro("Erro validando itens.", e);
 		}
 	}
 
@@ -137,7 +141,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 		} catch (ErroItemNaoEncontrado e) {
 			throw e;
 		} catch (ErroModelo e) {
-			throw new ErroCadastro("Erro validando item: " + e, e);
+			throw new ErroCadastro("Erro validando item: " + id, e);
 		}
 	}
 
@@ -209,7 +213,7 @@ public abstract class CadastroEvn<TipoMtd extends TBase<?>, TipoEnt extends Enti
 	}
 
 	protected void gerarTextoURL(StringBuffer cont, String texto, String estiloTexto, String url) {
-		cont.append("<a style=\"").append(estiloTexto).append("\" href=\"").append(url).append("\">")
+		cont.append("<a style=\"").append(estiloTexto).append("\" href=\"").append(StringEscapeUtils.escapeXml11(url)).append("\">")
 		        .append(StringEscapeUtils.escapeXml11(texto)).append("</a>");
 	}
 

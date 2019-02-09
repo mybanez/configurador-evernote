@@ -3,6 +3,7 @@ package meyn.cevn.modelo.interesse;
 import java.util.Collection;
 
 import meyn.cevn.modelo.Etiqueta;
+import meyn.cevn.modelo.Grupo;
 import meyn.cevn.modelo.acao.Acao;
 import meyn.cevn.modelo.projeto.Projeto;
 import meyn.cevn.modelo.referencia.Referencia;
@@ -21,6 +22,10 @@ public interface Interesse extends Etiqueta {
 	Collection<Referencia> getReferencias();
 
 	void setReferencias(Collection<Referencia> clReferencias);
+
+	Grupo<Referencia> getReferenciasPorFormato();
+
+	void setReferenciasPorFormato(Grupo<Referencia> clReferencias);
 
 	Sumario getSumario();
 

@@ -50,6 +50,7 @@ public class CadastroInteresse extends CadastroEtiqueta<Interesse> {
 		// Referências
 		CadastroReferencia cadRef = getCadastro(ChavesModelo.REFERENCIA);
 		intr.setReferencias(cadRef.consultarPorFiltro(usu, (Predicate<Referencia>) ehDoInteresse));
+		intr.setReferenciasPorFormato(cadRef.consultarPorGrupo(usu, "<Formato>").filtrar((Predicate<Referencia>) ehDoInteresse));
 		// Sumário
 		CadastroSumario cadSum = getCadastro(ChavesModelo.SUMARIO);
 		try {
