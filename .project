@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>ConfiguradorEvernote</name>
+	<name>ConfiguradorEvernoteStndConsole</name>
 	<comment></comment>
 	<projects>
+		<project>ConfiguradorEvernoteCore</project>
 		<project>UtilJEE</project>
 	</projects>
 	<buildSpec>

@@ -1,35 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="warn" monitorInterval="30"
-	packages="meyn.cevn.modelo.log">
+<Configuration status="info" monitorInterval="30"
+	packages="meyn.cevn.log4j">
 	<Appenders>
 		<Evernote name="Evernote" updateInterval="10"
-			ignoreExceptions="false">
+			ignoreExceptions="false"
+			facadeFactory="meyn.cevn.modelo.FabricaFachada">
 			<PatternLayout
 				pattern="%d{DATE}{America/Fortaleza} [%tid] %-5level %logger{36} - %msg%n" />
 		</Evernote>
 		<Console name="Console">
-			<PatternLayout
+			<PatternLayout charset="UTF-8"
 				pattern="%d{DATE}{America/Fortaleza} [%tid] %-5level %logger{36} - %msg%n" />
 		</Console>
 	</Appenders>
-	<Loggers>
-		<!-- 
-		<Logger name="meyn.cevn.controle.Console" level="trace"
-			additivity="false">
+	<Loggers> 
+		<Logger name="meyn.cevn.log4j" level="trace" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
-		<Logger name="meyn.cevn.modelo.sumario" level="trace"
-			additivity="false">
+		<Logger name="meyn.cevn.SessaoEvn" level="trace" additivity="false">
 			<AppenderRef ref="Console" />
 		</Logger>
-		-->
-		<Logger name="meyn.cevn.controle.RemovedorContexto" level="info" additivity="false">
-			<AppenderRef ref="Console" />
-		</Logger>
-		<Logger name="meyn" level="info" additivity="false">
+		<Logger name="meyn.cevn.controle.Console" level="trace" additivity="false">
 			<AppenderRef ref="Evernote" />
 		</Logger>
-		<Root level="info">
+		<Logger name="meyn" level="debug" additivity="false">
+			<AppenderRef ref="Evernote" />
+		</Logger>
+<!--	
+		<Logger name="meyn.cevn.controle.Console" level="trace" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+		<Logger name="meyn.cevn.modelo.cliente.ClienteEvn" level="trace" additivity="false">
+			<AppenderRef ref="Console" />
+		</Logger>
+-->	
+		<Root level="error">
 			<AppenderRef ref="Console" />
 		</Root>
 	</Loggers>

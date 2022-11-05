@@ -37,35 +37,39 @@ function atualizarTituloPainel(nome) {
 }
 
 function ligarAtualizadorTela() {
+	window.atualizadorAtivo = true;
 	desativarBotoes(true);
 	mostrarImagemProcessando(true);
 	PF('atualizadorTela').start();
 }
 
 function desligarAtualizadorTela() {
-	var processando = document.getElementById('paineis:console:processando');
-	var saida = document.getElementById('paineis:console:saida:padrao');
-	if (processando.value == 'false') {
-		PF('atualizadorTela').stop();
-		mostrarImagemProcessando(false);
-		desativarBotoes(false);
-		var resultado = document.getElementById('paineis:console:resultado');
-		var msgSumario, msgDetalhe, msgSeveridade;
-		if (resultado.value == 'ok') {
-			msgSumario = 'Sucesso!';
-			msgDetalhe = 'Processamento finalizado';
-			msgSeveridade = 'info';
-		} else {
-			msgSumario = 'Erro!';
-			msgDetalhe = 'Processamento finalizado: consultar console/log';
-			msgSeveridade = 'error';
+	if (window.atualizadorAtivo == true) {
+		var processando = document.getElementById('paineis:console:processando');
+		var saida = document.getElementById('paineis:console:saida:padrao');
+		if (processando.value == 'false') {
+			PF('atualizadorTela').stop();
+			mostrarImagemProcessando(false);
+			desativarBotoes(false);
+			var resultado = document.getElementById('paineis:console:resultado');
+			var msgSumario, msgDetalhe, msgSeveridade;
+			if (resultado.value == 'ok') {
+				msgSumario = 'Sucesso!';
+				msgDetalhe = 'Processamento finalizado';
+				msgSeveridade = 'info';
+			} else {
+				msgSumario = 'Erro!';
+				msgDetalhe = 'Processamento finalizado: consultar console/log';
+				msgSeveridade = 'error';
+			}
+			saida.innerHTML += '\n' + msgDetalhe.toUpperCase();
+			PF('mensagem').renderMessage({
+				'summary' : msgSumario,
+				'detail' : msgDetalhe,
+				'severity' : msgSeveridade
+			});
+			window.atualizadorAtivo = false;
 		}
-		saida.innerHTML += '\n' + msgDetalhe.toUpperCase();
-		PF('mensagem').renderMessage({
-			'summary' : msgSumario,
-			'detail' : msgDetalhe,
-			'severity' : msgSeveridade
-		});
 	}
 }
 

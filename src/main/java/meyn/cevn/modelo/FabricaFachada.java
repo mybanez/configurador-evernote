@@ -1,10 +1,15 @@
 package meyn.cevn.modelo;
 
 import meyn.util.modelo.ErroModelo;
-import meyn.util.modelo.FabricaFachadaModelo;
 
-public class FabricaFachada extends FabricaFachadaModelo {
-	public static Fachada getFachada() throws ErroModelo {
-		return (Fachada) getInstanciaEmCache(Fachada.class, Fachada.class.getName());
+public class FabricaFachada extends FabricaFachadaLocal {
+	
+	static {
+		setClasseFabrica(FabricaFachada.class.getName());
 	}
+
+	//Força a inicialização estática da classe
+	public static FachadaEvn getFachada() throws ErroModelo {
+		return FabricaFachadaLocal.getFachada();
+	}	
 }

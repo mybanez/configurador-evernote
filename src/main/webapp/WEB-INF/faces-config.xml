@@ -4,6 +4,6 @@
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-facesconfig_2_2.xsd"
 	version="2.2">
 	<lifecycle>
-		<phase-listener>meyn.cevn.controle.Rastreador</phase-listener>
+		<phase-listener>meyn.cevn.controle.RastreadorConsole</phase-listener>
 	</lifecycle>
 </faces-config>

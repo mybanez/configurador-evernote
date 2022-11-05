@@ -166,6 +166,9 @@
 		</h:panelGroup>
 	</h:panelGrid>
 	<br />
+	<script type="text/javascript">
+		window.atualizadorAtivo = true;
+	</script>
 	<h:form id="atualizador"
 		rendered="${empty param.sumario ? true : false}">
 		<p:poll id="atualizadorTela" widgetVar="atualizadorTela"
@@ -195,7 +198,7 @@
 							oncomplete="mostrarImagemProcessando(false)" async="true"
 							process="@this" actionListener="#{console.limparConsole}"
 							update="paineis:console">
-							<f:param name="estrategiaCarregamento" value="5" />
+							<f:param name="estrategiaCarregamento" value="6" />
 						</p:commandButton>
 					</h:panelGroup>
 					<h:panelGroup style="width: 100%;">
@@ -307,7 +310,7 @@
 						<h:outputText value="#{intr.nome}" />
 					</p:column>
 					<p:column headerText="Id" style="width: 40%;" sortBy="#{intr.id}">
-						<h:outputLink value="#{intr.sumario.URL}"
+						<h:outputLink value="#{intr.urlSumario}"
 							styleClass="ui-link-cevn-1">
 							<h:outputText value="#{intr.id}" />
 						</h:outputLink>
